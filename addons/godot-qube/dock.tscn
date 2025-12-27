@@ -1,0 +1,56 @@
+[gd_scene load_steps=2 format=3 uid="uid://dg5q7r8nxkp2c"]
+
+[ext_resource type="Script" path="res://addons/godot-qube/dock.gd" id="1_dock"]
+
+[node name="GodotQubeDock" type="Control"]
+custom_minimum_size = Vector2(400, 200)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_dock")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Toolbar" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="ScanButton" type="Button" parent="VBox/Toolbar"]
+layout_mode = 2
+text = "Scan"
+
+[node name="ExportButton" type="Button" parent="VBox/Toolbar"]
+layout_mode = 2
+text = "Export JSON"
+
+[node name="FilterOption" type="OptionButton" parent="VBox/Toolbar"]
+layout_mode = 2
+
+[node name="FileFilter" type="LineEdit" parent="VBox/Toolbar"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Filter by filename..."
+
+[node name="StatusLabel" type="Label" parent="VBox/Toolbar"]
+layout_mode = 2
+text = "Ready"
+horizontal_alignment = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ResultsLabel" type="RichTextLabel" parent="VBox/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+bbcode_enabled = true
+text = "[center][color=#888888]Click Scan to analyze codebase[/color][/center]"
+selection_enabled = true
