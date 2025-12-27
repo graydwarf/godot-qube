@@ -1,7 +1,23 @@
-<svg width="128" height="128" xmlns="http://www.w3.org/2000/svg">
-  <rect width="128" height="128" rx="16" fill="#2d2d2d"/>
-  <rect x="20" y="30" width="88" height="12" rx="4" fill="#6bcb77"/>
-  <rect x="20" y="50" width="70" height="12" rx="4" fill="#ffd93d"/>
-  <rect x="20" y="70" width="55" height="12" rx="4" fill="#ff6b6b"/>
-  <rect x="20" y="90" width="40" height="12" rx="4" fill="#4d96ff"/>
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark background -->
+  <rect width="256" height="256" fill="#1a1a2e"/>
+
+  <!-- Glow effect -->
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <style>
+      .face-text { font-family: 'Segoe UI', Arial, sans-serif; font-weight: bold; }
+    </style>
+  </defs>
+
+  <!-- Cube icon scaled and centered (48px -> 160px, centered in 256px) -->
+  <g transform="translate(48, 48) scale(3.333)" filter="url(#glow)">
+    <path d="M21.6787 5.33182C23.1688 4.73575 24.8312 4.73575 26.3213 5.33182L41.3285 11.335C42.942 11.9804 44 13.5432 44 15.281V32.7188C44 34.4567 42.942 36.0194 41.3284 36.6649L26.3212 42.6677C24.8311 43.2638 23.1689 43.2638 21.6788 42.6677L6.67159 36.6649C5.05804 36.0194 4 34.4567 4 32.7188V15.281C4 13.5432 5.05801 11.9804 6.67152 11.335L21.6787 5.33182ZM14.2525 15.6054C13.6204 15.3279 12.883 15.6154 12.6054 16.2475C12.3279 16.8796 12.6154 17.617 13.2475 17.8946L22.75 22.0664V31.25C22.75 31.9404 23.3096 32.5 24 32.5C24.6904 32.5 25.25 31.9404 25.25 31.25V22.0664L34.7525 17.8946C35.3846 17.617 35.6721 16.8796 35.3946 16.2475C35.117 15.6154 34.3796 15.3279 33.7475 15.6054L24 19.8848L14.2525 15.6054Z" fill="#00d4ff"/>
+  </g>
 </svg>
