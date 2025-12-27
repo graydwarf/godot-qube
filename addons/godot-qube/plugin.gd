@@ -7,7 +7,7 @@ var dock: Control
 
 func _enter_tree() -> void:
 	dock = preload("res://addons/godot-qube/dock.tscn").instantiate()
-	add_control_to_bottom_panel(dock, "Godot Qube")
+	add_control_to_bottom_panel(dock, "Code Quality")
 
 
 func _exit_tree() -> void:
