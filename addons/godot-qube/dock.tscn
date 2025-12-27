@@ -25,10 +25,6 @@ layout_mode = 2
 layout_mode = 2
 text = "Scan"
 
-[node name="ExportButton" type="Button" parent="VBox/Toolbar"]
-layout_mode = 2
-text = "Export JSON"
-
 [node name="FilterOption" type="OptionButton" parent="VBox/Toolbar"]
 layout_mode = 2
 
@@ -41,6 +37,10 @@ placeholder_text = "Filter by filename..."
 layout_mode = 2
 text = "Ready"
 horizontal_alignment = 2
+
+[node name="ExportButton" type="Button" parent="VBox/Toolbar"]
+layout_mode = 2
+text = "Export JSON"
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBox"]
 layout_mode = 2
