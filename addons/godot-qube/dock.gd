@@ -38,7 +38,6 @@ var html_export_button: Button
 var severity_filter: OptionButton
 var type_filter: OptionButton
 var file_filter: LineEdit
-var status_label: Label
 var settings_button: Button
 var settings_panel: PanelContainer
 
@@ -80,7 +79,6 @@ func _ready() -> void:
 	severity_filter = $VBox/Toolbar/SeverityFilter
 	type_filter = $VBox/Toolbar/TypeFilter
 	file_filter = $VBox/Toolbar/FileFilter
-	status_label = $VBox/Toolbar/StatusLabel
 	settings_button = $VBox/Toolbar/SettingsButton
 	settings_panel = $VBox/SettingsPanel
 
@@ -227,7 +225,6 @@ func _on_scan_pressed() -> void:
 	scan_button.disabled = true
 	export_button.disabled = true
 	html_export_button.disabled = true
-	status_label.text = "Scanning..."
 	results_label.text = "[color=#888888]Analyzing codebase...[/color]"
 
 	# Use call_deferred to allow UI to update
@@ -243,25 +240,10 @@ func _run_analysis() -> void:
 	print("Code Quality: Analysis complete - %d issues found" % current_result.issues.size())
 
 	_display_results()
-	_update_status()
 
 	scan_button.disabled = false
 	export_button.disabled = false
 	html_export_button.disabled = false
-
-
-func _update_status() -> void:
-	if not current_result:
-		status_label.text = "Ready"
-		return
-
-	var parts: Array[String] = []
-	if show_total_issues:
-		parts.append("Issues: %d" % current_result.issues.size())
-	if show_debt:
-		parts.append("Debt: %d" % current_result.get_total_debt_score())
-
-	status_label.text = " | ".join(parts) if parts.size() > 0 else "Ready"
 
 
 func _on_export_pressed() -> void:
@@ -276,7 +258,6 @@ func _on_export_pressed() -> void:
 		file.store_string(json_str)
 		file.close()
 		print("Code Quality: Exported to %s" % export_path)
-		status_label.text = "Exported to code_quality_report.json"
 
 		# Open the file in the editor
 		var script = load(export_path)
@@ -284,7 +265,7 @@ func _on_export_pressed() -> void:
 			EditorInterface.edit_resource(script)
 	else:
 		push_error("Code Quality: Failed to write export file")
-		status_label.text = "Export failed!"
+		OS.alert("Failed to write JSON export file:\n%s" % export_path, "Export Error")
 
 
 func _on_html_export_pressed() -> void:
@@ -299,11 +280,10 @@ func _on_html_export_pressed() -> void:
 		file.store_string(html)
 		file.close()
 		print("Code Quality: HTML report exported to %s" % export_path)
-		status_label.text = "Exported to code_quality_report.html"
 		OS.shell_open(ProjectSettings.globalize_path(export_path))
 	else:
 		push_error("Code Quality: Failed to write HTML report")
-		status_label.text = "HTML export failed!"
+		OS.alert("Failed to write HTML export file:\n%s" % export_path, "Export Error")
 
 
 func _generate_html_report() -> String:
@@ -596,13 +576,15 @@ func _on_settings_pressed() -> void:
 func _on_show_issues_toggled(pressed: bool) -> void:
 	show_total_issues = pressed
 	_save_setting("code_quality/display/show_issues", pressed)
-	_update_status()
+	if current_result:
+		_display_results()
 
 
 func _on_show_debt_toggled(pressed: bool) -> void:
 	show_debt = pressed
 	_save_setting("code_quality/display/show_debt", pressed)
-	_update_status()
+	if current_result:
+		_display_results()
 
 
 func _on_show_export_toggled(pressed: bool) -> void:
@@ -636,11 +618,21 @@ func _display_results() -> void:
 		return
 
 	var bbcode := "[b]Code Quality Report[/b]\n"
-	bbcode += "Files: %d | Lines: %d | Time: %dms\n\n" % [
+	bbcode += "Files: %d | Lines: %d | Time: %dms\n" % [
 		current_result.files_analyzed,
 		current_result.total_lines,
 		current_result.analysis_time_ms
 	]
+
+	# Add Issues/Debt summary on line 2 based on settings
+	var summary_parts: Array[String] = []
+	if show_total_issues:
+		summary_parts.append("Issues: %d" % current_result.issues.size())
+	if show_debt:
+		summary_parts.append("Debt: %d" % current_result.get_total_debt_score())
+	if summary_parts.size() > 0:
+		bbcode += " | ".join(summary_parts) + "\n"
+	bbcode += "\n"
 
 	var issues_to_show: Array = []
 	var Issue = IssueScript  # Reference for severity enum
