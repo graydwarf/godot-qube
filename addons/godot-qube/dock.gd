@@ -143,17 +143,34 @@ func _populate_type_filter() -> void:
 
 
 func _load_settings() -> void:
-	# Load display settings
+	var editor_settings := EditorInterface.get_editor_settings()
+
+	# Load display settings from EditorSettings
+	show_total_issues = editor_settings.get_setting("code_quality/display/show_issues") if editor_settings.has_setting("code_quality/display/show_issues") else true
+	show_debt = editor_settings.get_setting("code_quality/display/show_debt") if editor_settings.has_setting("code_quality/display/show_debt") else true
+	show_export_button = editor_settings.get_setting("code_quality/display/show_export") if editor_settings.has_setting("code_quality/display/show_export") else true
+
+	# Load analysis limits
+	current_config.line_limit_soft = editor_settings.get_setting("code_quality/limits/file_lines_warn") if editor_settings.has_setting("code_quality/limits/file_lines_warn") else 200
+	current_config.line_limit_hard = editor_settings.get_setting("code_quality/limits/file_lines_critical") if editor_settings.has_setting("code_quality/limits/file_lines_critical") else 300
+	current_config.function_line_limit = editor_settings.get_setting("code_quality/limits/function_lines") if editor_settings.has_setting("code_quality/limits/function_lines") else 30
+	current_config.cyclomatic_warning = editor_settings.get_setting("code_quality/limits/complexity_warn") if editor_settings.has_setting("code_quality/limits/complexity_warn") else 10
+
+	# Apply to UI
 	show_issues_check.button_pressed = show_total_issues
 	show_debt_check.button_pressed = show_debt
 	show_export_check.button_pressed = show_export_button
 	export_button.visible = show_export_button
 
-	# Load config values into spinboxes
 	max_lines_soft_spin.value = current_config.line_limit_soft
 	max_lines_hard_spin.value = current_config.line_limit_hard
 	max_func_lines_spin.value = current_config.function_line_limit
 	max_complexity_spin.value = current_config.cyclomatic_warning
+
+
+func _save_setting(key: String, value: Variant) -> void:
+	var editor_settings := EditorInterface.get_editor_settings()
+	editor_settings.set_setting(key, value)
 
 
 func _on_scan_pressed() -> void:
@@ -248,33 +265,40 @@ func _on_settings_pressed() -> void:
 
 func _on_show_issues_toggled(pressed: bool) -> void:
 	show_total_issues = pressed
+	_save_setting("code_quality/display/show_issues", pressed)
 	_update_status()
 
 
 func _on_show_debt_toggled(pressed: bool) -> void:
 	show_debt = pressed
+	_save_setting("code_quality/display/show_debt", pressed)
 	_update_status()
 
 
 func _on_show_export_toggled(pressed: bool) -> void:
 	show_export_button = pressed
+	_save_setting("code_quality/display/show_export", pressed)
 	export_button.visible = pressed
 
 
 func _on_max_lines_soft_changed(value: float) -> void:
 	current_config.line_limit_soft = int(value)
+	_save_setting("code_quality/limits/file_lines_warn", int(value))
 
 
 func _on_max_lines_hard_changed(value: float) -> void:
 	current_config.line_limit_hard = int(value)
+	_save_setting("code_quality/limits/file_lines_critical", int(value))
 
 
 func _on_max_func_lines_changed(value: float) -> void:
 	current_config.function_line_limit = int(value)
+	_save_setting("code_quality/limits/function_lines", int(value))
 
 
 func _on_max_complexity_changed(value: float) -> void:
 	current_config.cyclomatic_warning = int(value)
+	_save_setting("code_quality/limits/complexity_warn", int(value))
 
 
 func _display_results() -> void:

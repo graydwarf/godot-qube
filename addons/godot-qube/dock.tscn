@@ -45,15 +45,15 @@ layout_mode = 2
 text = "Ready"
 horizontal_alignment = 2
 
+[node name="ExportButton" type="Button" parent="VBox/Toolbar"]
+layout_mode = 2
+text = "Export JSON"
+
 [node name="SettingsButton" type="Button" parent="VBox/Toolbar"]
 layout_mode = 2
 tooltip_text = "Settings"
 icon = ExtResource("2_settings")
 flat = true
-
-[node name="ExportButton" type="Button" parent="VBox/Toolbar"]
-layout_mode = 2
-text = "Export JSON"
 
 [node name="SettingsPanel" type="PanelContainer" parent="VBox"]
 visible = false
