@@ -1,8 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://dg5q7r8nxkp2c"]
+[gd_scene load_steps=3 format=3 uid="uid://dg5q7r8nxkp2c"]
 
 [ext_resource type="Script" path="res://addons/godot-qube/dock.gd" id="1_dock"]
+[ext_resource type="Texture2D" path="res://addons/godot-qube/icons/settings.svg" id="2_settings"]
 
-[node name="GodotQubeDock" type="Control"]
+[node name="CodeQualityDock" type="Control"]
 custom_minimum_size = Vector2(400, 200)
 anchors_preset = 15
 anchor_right = 1.0
@@ -25,22 +26,123 @@ layout_mode = 2
 layout_mode = 2
 text = "Scan"
 
-[node name="FilterOption" type="OptionButton" parent="VBox/Toolbar"]
+[node name="SeverityFilter" type="OptionButton" parent="VBox/Toolbar"]
 layout_mode = 2
+tooltip_text = "Filter by severity level"
+
+[node name="TypeFilter" type="OptionButton" parent="VBox/Toolbar"]
+layout_mode = 2
+tooltip_text = "Filter by issue type"
 
 [node name="FileFilter" type="LineEdit" parent="VBox/Toolbar"]
 layout_mode = 2
 size_flags_horizontal = 3
 placeholder_text = "Filter by filename..."
+tooltip_text = "Filter issues by filename"
 
 [node name="StatusLabel" type="Label" parent="VBox/Toolbar"]
 layout_mode = 2
 text = "Ready"
 horizontal_alignment = 2
 
+[node name="SettingsButton" type="Button" parent="VBox/Toolbar"]
+layout_mode = 2
+tooltip_text = "Settings"
+icon = ExtResource("2_settings")
+flat = true
+
 [node name="ExportButton" type="Button" parent="VBox/Toolbar"]
 layout_mode = 2
 text = "Export JSON"
+
+[node name="SettingsPanel" type="PanelContainer" parent="VBox"]
+visible = false
+layout_mode = 2
+
+[node name="Margin" type="MarginContainer" parent="VBox/SettingsPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="SettingsVBox" type="VBoxContainer" parent="VBox/SettingsPanel/Margin"]
+layout_mode = 2
+
+[node name="DisplayLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox"]
+layout_mode = 2
+text = "Display Options"
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="DisplayGroup" type="HBoxContainer" parent="VBox/SettingsPanel/Margin/SettingsVBox"]
+layout_mode = 2
+
+[node name="ShowIssuesCheck" type="CheckBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/DisplayGroup"]
+layout_mode = 2
+button_pressed = true
+text = "Show Issues"
+
+[node name="ShowDebtCheck" type="CheckBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/DisplayGroup"]
+layout_mode = 2
+button_pressed = true
+text = "Show Debt"
+
+[node name="ShowExportCheck" type="CheckBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/DisplayGroup"]
+layout_mode = 2
+button_pressed = true
+text = "Show Export"
+
+[node name="Separator" type="HSeparator" parent="VBox/SettingsPanel/Margin/SettingsVBox"]
+layout_mode = 2
+
+[node name="LimitsLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox"]
+layout_mode = 2
+text = "Analysis Limits"
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="LimitsGroup" type="GridContainer" parent="VBox/SettingsPanel/Margin/SettingsVBox"]
+layout_mode = 2
+columns = 4
+
+[node name="MaxLinesSoftLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
+layout_mode = 2
+text = "File Lines (warn):"
+
+[node name="MaxLinesSoftSpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
+layout_mode = 2
+min_value = 50.0
+max_value = 1000.0
+value = 200.0
+
+[node name="MaxLinesHardLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
+layout_mode = 2
+text = "File Lines (critical):"
+
+[node name="MaxLinesHardSpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
+layout_mode = 2
+min_value = 100.0
+max_value = 2000.0
+value = 300.0
+
+[node name="MaxFuncLinesLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
+layout_mode = 2
+text = "Function Lines:"
+
+[node name="MaxFuncLinesSpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
+layout_mode = 2
+min_value = 10.0
+max_value = 200.0
+value = 30.0
+
+[node name="MaxComplexityLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
+layout_mode = 2
+text = "Complexity (warn):"
+
+[node name="MaxComplexitySpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
+layout_mode = 2
+min_value = 5.0
+max_value = 50.0
+value = 10.0
 
 [node name="ScrollContainer" type="ScrollContainer" parent="VBox"]
 layout_mode = 2
