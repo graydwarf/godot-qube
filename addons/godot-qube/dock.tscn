@@ -1,10 +1,11 @@
 [gd_scene load_steps=3 format=3 uid="uid://dg5q7r8nxkp2c"]
 
-[ext_resource type="Script" path="res://addons/godot-qube/dock.gd" id="1_dock"]
-[ext_resource type="Texture2D" path="res://addons/godot-qube/icons/settings.svg" id="2_settings"]
+[ext_resource type="Script" uid="uid://bte5tgtc4tbfx" path="res://addons/godot-qube/dock.gd" id="1_dock"]
+[ext_resource type="Texture2D" uid="uid://dhb7gprc0gupq" path="res://addons/godot-qube/icons/settings.svg" id="2_settings"]
 
 [node name="CodeQualityDock" type="Control"]
 custom_minimum_size = Vector2(400, 200)
+layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -13,7 +14,7 @@ grow_vertical = 2
 script = ExtResource("1_dock")
 
 [node name="VBox" type="VBoxContainer" parent="."]
-anchors_preset = 15
+layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
@@ -29,23 +30,82 @@ text = "Scan"
 [node name="SeverityFilter" type="OptionButton" parent="VBox/Toolbar"]
 layout_mode = 2
 tooltip_text = "Filter by severity level"
+selected = 0
+item_count = 4
+popup/item_0/text = "All Severities"
+popup/item_0/id = 0
+popup/item_1/text = "Critical"
+popup/item_1/id = 1
+popup/item_2/text = "Warnings"
+popup/item_2/id = 2
+popup/item_3/text = "Info"
+popup/item_3/id = 3
 
 [node name="TypeFilter" type="OptionButton" parent="VBox/Toolbar"]
 layout_mode = 2
 tooltip_text = "Filter by issue type"
+selected = 0
+item_count = 22
+popup/item_0/text = "All Types"
+popup/item_0/id = 0
+popup/item_1/text = "File Length"
+popup/item_1/id = 1
+popup/item_2/text = "Long Function"
+popup/item_2/id = 2
+popup/item_3/text = "Long Line"
+popup/item_3/id = 3
+popup/item_4/text = "TODO/FIXME"
+popup/item_4/id = 4
+popup/item_5/text = "Print Statement"
+popup/item_5/id = 5
+popup/item_6/text = "Empty Function"
+popup/item_6/id = 6
+popup/item_7/text = "Magic Number"
+popup/item_7/id = 7
+popup/item_8/text = "Commented Code"
+popup/item_8/id = 8
+popup/item_9/text = "Missing Type Hint"
+popup/item_9/id = 9
+popup/item_10/text = "Missing Return Type"
+popup/item_10/id = 10
+popup/item_11/text = "Too Many Params"
+popup/item_11/id = 11
+popup/item_12/text = "Deep Nesting"
+popup/item_12/id = 12
+popup/item_13/text = "High Complexity"
+popup/item_13/id = 13
+popup/item_14/text = "God Class"
+popup/item_14/id = 14
+popup/item_15/text = "Naming: Class"
+popup/item_15/id = 15
+popup/item_16/text = "Naming: Function"
+popup/item_16/id = 16
+popup/item_17/text = "Naming: Signal"
+popup/item_17/id = 17
+popup/item_18/text = "Naming: Constant"
+popup/item_18/id = 18
+popup/item_19/text = "Naming: Enum"
+popup/item_19/id = 19
+popup/item_20/text = "Unused Variable"
+popup/item_20/id = 20
+popup/item_21/text = "Unused Parameter"
+popup/item_21/id = 21
 
 [node name="FileFilter" type="LineEdit" parent="VBox/Toolbar"]
 layout_mode = 2
 size_flags_horizontal = 3
-placeholder_text = "Filter by filename..."
 tooltip_text = "Filter issues by filename"
+placeholder_text = "Filter by filename..."
 
 [node name="ExportButton" type="Button" parent="VBox/Toolbar"]
+visible = false
 layout_mode = 2
+disabled = true
 text = "Export JSON"
 
 [node name="HTMLExportButton" type="Button" parent="VBox/Toolbar"]
 layout_mode = 2
+disabled = true
 text = "Export HTML"
 
 [node name="SettingsButton" type="Button" parent="VBox/Toolbar"]
@@ -58,155 +118,6 @@ flat = true
 visible = false
 layout_mode = 2
 
-[node name="Margin" type="MarginContainer" parent="VBox/SettingsPanel"]
-layout_mode = 2
-theme_override_constants/margin_left = 8
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 8
-theme_override_constants/margin_bottom = 8
-
-[node name="SettingsVBox" type="VBoxContainer" parent="VBox/SettingsPanel/Margin"]
-layout_mode = 2
-
-[node name="DisplayLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox"]
-layout_mode = 2
-text = "Display Options"
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-
-[node name="DisplayGroup" type="HBoxContainer" parent="VBox/SettingsPanel/Margin/SettingsVBox"]
-layout_mode = 2
-
-[node name="ShowIssuesCheck" type="CheckBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/DisplayGroup"]
-layout_mode = 2
-button_pressed = true
-text = "Show Issues"
-
-[node name="ShowDebtCheck" type="CheckBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/DisplayGroup"]
-layout_mode = 2
-button_pressed = true
-text = "Show Debt"
-
-[node name="ShowJSONExportCheck" type="CheckBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/DisplayGroup"]
-layout_mode = 2
-text = "Show JSON Export"
-
-[node name="ShowHTMLExportCheck" type="CheckBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/DisplayGroup"]
-layout_mode = 2
-button_pressed = true
-text = "Show HTML Export"
-
-[node name="Separator" type="HSeparator" parent="VBox/SettingsPanel/Margin/SettingsVBox"]
-layout_mode = 2
-
-[node name="LimitsLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox"]
-layout_mode = 2
-text = "Analysis Limits"
-theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
-
-[node name="LimitsGroup" type="GridContainer" parent="VBox/SettingsPanel/Margin/SettingsVBox"]
-layout_mode = 2
-columns = 4
-
-[node name="MaxLinesSoftLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-text = "File Lines (warn):"
-
-[node name="MaxLinesSoftSpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-min_value = 50.0
-max_value = 1000.0
-value = 200.0
-
-[node name="MaxLinesHardLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-text = "File Lines (critical):"
-
-[node name="MaxLinesHardSpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-min_value = 100.0
-max_value = 2000.0
-value = 300.0
-
-[node name="MaxFuncLinesLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-text = "Function Lines:"
-
-[node name="MaxFuncLinesSpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-min_value = 10.0
-max_value = 200.0
-value = 30.0
-
-[node name="MaxComplexityLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-text = "Complexity (warn):"
-
-[node name="MaxComplexitySpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-min_value = 5.0
-max_value = 50.0
-value = 10.0
-
-[node name="FuncLinesCritLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-text = "Func Lines (crit):"
-
-[node name="FuncLinesCritSpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-min_value = 20.0
-max_value = 300.0
-value = 60.0
-
-[node name="MaxComplexityCritLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-text = "Complexity (crit):"
-
-[node name="MaxComplexityCritSpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-min_value = 5.0
-max_value = 50.0
-value = 15.0
-
-[node name="MaxParamsLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-text = "Max Params:"
-
-[node name="MaxParamsSpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-min_value = 2.0
-max_value = 15.0
-value = 4.0
-
-[node name="MaxNestingLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-text = "Max Nesting:"
-
-[node name="MaxNestingSpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-min_value = 2.0
-max_value = 10.0
-value = 3.0
-
-[node name="GodClassFuncsLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-text = "God Class Funcs:"
-
-[node name="GodClassFuncsSpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-min_value = 5.0
-max_value = 50.0
-value = 20.0
-
-[node name="GodClassSignalsLabel" type="Label" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-text = "God Class Signals:"
-
-[node name="GodClassSignalsSpin" type="SpinBox" parent="VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup"]
-layout_mode = 2
-min_value = 3.0
-max_value = 30.0
-value = 10.0
-
 [node name="ScrollContainer" type="ScrollContainer" parent="VBox"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -216,6 +127,7 @@ horizontal_scroll_mode = 0
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
+focus_mode = 2
 bbcode_enabled = true
 text = "[center][color=#888888]Click Scan to analyze codebase[/color][/center]"
 selection_enabled = true

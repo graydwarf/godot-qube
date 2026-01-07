@@ -1,5 +1,5 @@
 # Exclude from zip/tarball downloads (Asset Library)
-# Users only need the addons/ folder, LICENSE, and README
+# Users only need the addons/ folder (which contains LICENSE and README)
 .gitattributes export-ignore
 .gitignore export-ignore
 .godot/ export-ignore
@@ -8,3 +8,5 @@ icon.svg export-ignore
 icon.svg.import export-ignore
 project.godot export-ignore
 screenshots/ export-ignore
+LICENSE export-ignore
+README.md export-ignore

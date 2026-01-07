@@ -35,7 +35,9 @@ func _parse_arguments() -> void:
 		match arg:
 			"--path":
 				if i + 1 < args.size():
-					_target_path = args[i + 1]
+					# Normalize path separators for Windows compatibility
+					var raw_path: String = args[i + 1]
+					_target_path = raw_path.replace("/", "\\") if OS.has_feature("windows") else raw_path
 					i += 1
 			"--format":
 				if i + 1 < args.size():
@@ -135,6 +137,7 @@ func _output_clickable(result) -> void:
 
 	print("Debt Score: %d | Time: %dms" % [result.get_total_debt_score(), result.analysis_time_ms])
 
+# qube:ignore-next-line - Console output formatting requires many print calls
 func _output_console(result) -> void:
 	print("")
 	print("=" .repeat(60))
@@ -247,10 +250,13 @@ const ISSUE_TYPES := {
 	"naming-function": "Naming: Function",
 	"naming-signal": "Naming: Signal",
 	"naming-const": "Naming: Constant",
-	"naming-enum": "Naming: Enum"
+	"naming-enum": "Naming: Enum",
+	"unused-variable": "Unused Variable",
+	"unused-parameter": "Unused Parameter"
 }
 
 
+# qube:ignore-next-line - HTML generation is inherently complex
 func _generate_html_report(result) -> String:
 	var critical: Array = result.get_issues_by_severity(IssueClass.Severity.CRITICAL)
 	var warnings: Array = result.get_issues_by_severity(IssueClass.Severity.WARNING)

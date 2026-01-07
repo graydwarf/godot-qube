@@ -27,7 +27,9 @@ const ISSUE_TYPES := {
 	"naming-function": "Naming: Function",
 	"naming-signal": "Naming: Signal",
 	"naming-const": "Naming: Constant",
-	"naming-enum": "Naming: Enum"
+	"naming-enum": "Naming: Enum",
+	"unused-variable": "Unused Variable",
+	"unused-parameter": "Unused Parameter"
 }
 
 # UI References
@@ -46,6 +48,7 @@ var show_issues_check: CheckBox
 var show_debt_check: CheckBox
 var show_json_export_check: CheckBox
 var show_html_export_check: CheckBox
+var respect_gdignore_check: CheckBox
 var max_lines_soft_spin: SpinBox
 var max_lines_hard_spin: SpinBox
 var max_func_lines_spin: SpinBox
@@ -68,6 +71,7 @@ var show_total_issues: bool = true
 var show_debt: bool = true
 var show_json_export: bool = false
 var show_html_export: bool = true
+var respect_gdignore: bool = true  # Skip directories with .gdignore files
 
 # Preload the analyzer scripts
 var CodeAnalyzerScript = preload("res://addons/godot-qube/analyzer/code-analyzer.gd")
@@ -78,6 +82,7 @@ var IssueScript = preload("res://addons/godot-qube/analyzer/issue.gd")
 var current_config: Resource
 
 
+# qube:ignore-next-line - UI initialization requires many node references
 func _ready() -> void:
 	# Get node references
 	results_label = $VBox/ScrollContainer/ResultsLabel
@@ -94,21 +99,11 @@ func _ready() -> void:
 		push_error("Code Quality: Failed to find UI nodes")
 		return
 
-	# Get settings controls
-	show_issues_check = $VBox/SettingsPanel/Margin/SettingsVBox/DisplayGroup/ShowIssuesCheck
-	show_debt_check = $VBox/SettingsPanel/Margin/SettingsVBox/DisplayGroup/ShowDebtCheck
-	show_json_export_check = $VBox/SettingsPanel/Margin/SettingsVBox/DisplayGroup/ShowJSONExportCheck
-	show_html_export_check = $VBox/SettingsPanel/Margin/SettingsVBox/DisplayGroup/ShowHTMLExportCheck
-	max_lines_soft_spin = $VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup/MaxLinesSoftSpin
-	max_lines_hard_spin = $VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup/MaxLinesHardSpin
-	max_func_lines_spin = $VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup/MaxFuncLinesSpin
-	max_complexity_spin = $VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup/MaxComplexitySpin
-	func_lines_crit_spin = $VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup/FuncLinesCritSpin
-	max_complexity_crit_spin = $VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup/MaxComplexityCritSpin
-	max_params_spin = $VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup/MaxParamsSpin
-	max_nesting_spin = $VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup/MaxNestingSpin
-	god_class_funcs_spin = $VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup/GodClassFuncsSpin
-	god_class_signals_spin = $VBox/SettingsPanel/Margin/SettingsVBox/LimitsGroup/GodClassSignalsSpin
+	# Initialize config first (needed for settings cards)
+	current_config = AnalysisConfigScript.new()
+
+	# Build settings panel with cards (creates all settings controls)
+	_setup_settings_cards()
 
 	# Connect signals
 	results_label.meta_clicked.connect(_on_link_clicked)
@@ -160,8 +155,7 @@ func _ready() -> void:
 	# Setup type filter options
 	_populate_type_filter()
 
-	# Initialize config
-	current_config = AnalysisConfigScript.new()
+	# Load persisted settings (applies to config and UI controls)
 	_load_settings()
 
 	export_button.disabled = true
@@ -218,6 +212,7 @@ func _get_available_types_for_severity(severity_filter: String) -> Dictionary:
 	return available
 
 
+# qube:ignore-next-line - Settings loading requires many conditional reads
 func _load_settings() -> void:
 	var editor_settings := EditorInterface.get_editor_settings()
 
@@ -226,6 +221,8 @@ func _load_settings() -> void:
 	show_debt = editor_settings.get_setting("code_quality/display/show_debt") if editor_settings.has_setting("code_quality/display/show_debt") else true
 	show_json_export = editor_settings.get_setting("code_quality/display/show_json_export") if editor_settings.has_setting("code_quality/display/show_json_export") else false
 	show_html_export = editor_settings.get_setting("code_quality/display/show_html_export") if editor_settings.has_setting("code_quality/display/show_html_export") else true
+	respect_gdignore = editor_settings.get_setting("code_quality/scanning/respect_gdignore") if editor_settings.has_setting("code_quality/scanning/respect_gdignore") else true
+	current_config.respect_gdignore = respect_gdignore
 
 	# Load analysis limits
 	current_config.line_limit_soft = editor_settings.get_setting("code_quality/limits/file_lines_warn") if editor_settings.has_setting("code_quality/limits/file_lines_warn") else 200
@@ -244,6 +241,7 @@ func _load_settings() -> void:
 	show_debt_check.button_pressed = show_debt
 	show_json_export_check.button_pressed = show_json_export
 	show_html_export_check.button_pressed = show_html_export
+	respect_gdignore_check.button_pressed = respect_gdignore
 	export_button.visible = show_json_export
 	html_export_button.visible = show_html_export
 
@@ -266,6 +264,11 @@ func _save_setting(key: String, value: Variant) -> void:
 
 func _on_scan_pressed() -> void:
 	print("Code Quality: Scan button pressed")
+
+	# Hide settings, show results
+	settings_panel.visible = false
+	$VBox/ScrollContainer.visible = true
+
 	scan_button.disabled = true
 	export_button.disabled = true
 	html_export_button.disabled = true
@@ -330,6 +333,7 @@ func _on_html_export_pressed() -> void:
 		OS.alert("Failed to write HTML export file:\n%s" % export_path, "Export Error")
 
 
+# qube:ignore-next-line - HTML generation is inherently complex
 func _generate_html_report() -> String:
 	var critical: Array = current_result.get_issues_by_severity(IssueScript.Severity.CRITICAL)
 	var warnings: Array = current_result.get_issues_by_severity(IssueScript.Severity.WARNING)
@@ -615,6 +619,8 @@ func _on_file_filter_changed(new_text: String) -> void:
 
 func _on_settings_pressed() -> void:
 	settings_panel.visible = not settings_panel.visible
+	# Settings and results are mutually exclusive
+	$VBox/ScrollContainer.visible = not settings_panel.visible
 
 
 func _on_show_issues_toggled(pressed: bool) -> void:
@@ -641,6 +647,12 @@ func _on_show_html_export_toggled(pressed: bool) -> void:
 	show_html_export = pressed
 	_save_setting("code_quality/display/show_html_export", pressed)
 	html_export_button.visible = pressed
+
+
+func _on_respect_gdignore_toggled(pressed: bool) -> void:
+	respect_gdignore = pressed
+	current_config.respect_gdignore = pressed
+	_save_setting("code_quality/scanning/respect_gdignore", pressed)
 
 
 func _on_max_lines_soft_changed(value: float) -> void:
@@ -693,6 +705,7 @@ func _on_god_class_signals_changed(value: float) -> void:
 	_save_setting("code_quality/limits/god_class_signals", int(value))
 
 
+# qube:ignore-next-line - Results display requires formatting for all issue types
 func _display_results() -> void:
 	if not current_result:
 		return
@@ -867,3 +880,247 @@ func _on_link_clicked(meta: Variant) -> void:
 		EditorInterface.set_main_screen_editor("Script")
 	else:
 		push_warning("Could not load script: %s" % file_path)
+
+
+# ========== Settings Card UI ==========
+
+# Create About section card
+# qube:ignore-next-line - UI card creation requires many style and layout calls
+func _create_about_card() -> PanelContainer:
+	var card := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.15, 0.17, 0.22, 0.9)
+	style.border_color = Color(0.3, 0.35, 0.45, 0.5)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(12)
+	card.add_theme_stylebox_override("panel", style)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	card.add_child(vbox)
+
+	# Header
+	var header := Label.new()
+	header.text = "About"
+	header.add_theme_font_size_override("font_size", 15)
+	header.add_theme_color_override("font_color", Color(0.9, 0.92, 0.95))
+	vbox.add_child(header)
+
+	# Plugin title
+	var title := Label.new()
+	title.text = "Godot Qube"
+	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_color_override("font_color", Color(0.4, 0.75, 1.0))
+	vbox.add_child(title)
+
+	# Subtitle
+	var subtitle := Label.new()
+	subtitle.text = "Code Quality Analyzer for GDScript"
+	subtitle.add_theme_color_override("font_color", Color(0.6, 0.65, 0.7))
+	vbox.add_child(subtitle)
+
+	# License
+	var license_lbl := Label.new()
+	license_lbl.text = "MIT License - Copyright (c) 2025 Poplava"
+	license_lbl.add_theme_font_size_override("font_size", 11)
+	license_lbl.add_theme_color_override("font_color", Color(0.5, 0.52, 0.55))
+	vbox.add_child(license_lbl)
+
+	# Links row
+	var links := HBoxContainer.new()
+	links.add_theme_constant_override("separation", 15)
+	vbox.add_child(links)
+
+	var link_data := [
+		["Discord", "https://discord.gg/9GnrTKXGfq"],
+		["GitHub", "https://github.com/graydwarf/godot-qube"],
+		["More Tools", "https://poplava.itch.io"]
+	]
+	for data in link_data:
+		var btn := Button.new()
+		btn.text = data[0]
+		btn.flat = true
+		btn.add_theme_color_override("font_color", Color(0.5, 0.7, 1.0))
+		btn.add_theme_color_override("font_hover_color", Color(0.7, 0.85, 1.0))
+		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+		var url: String = data[1]
+		btn.pressed.connect(func(): OS.shell_open(url))
+		links.add_child(btn)
+
+	return card
+
+
+# Setup settings panel with cards and scroll container (creates all controls)
+func _setup_settings_cards() -> void:
+	# Create ScrollContainer wrapper
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+
+	# Create margin container (10px all sides)
+	var margin := MarginContainer.new()
+	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.add_theme_constant_override("margin_left", 10)
+	margin.add_theme_constant_override("margin_right", 10)
+	margin.add_theme_constant_override("margin_top", 10)
+	margin.add_theme_constant_override("margin_bottom", 10)
+	scroll.add_child(margin)
+
+	# Create cards container (10px between cards)
+	var cards_vbox := VBoxContainer.new()
+	cards_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cards_vbox.add_theme_constant_override("separation", 10)
+	margin.add_child(cards_vbox)
+
+	# Create Display Options card
+	var display_card := _create_display_options_card()
+	cards_vbox.add_child(display_card)
+
+	# Create Analysis Limits card
+	var limits_card := _create_limits_card()
+	cards_vbox.add_child(limits_card)
+
+	# Create About card
+	var about_card := _create_about_card()
+	cards_vbox.add_child(about_card)
+
+	# Add scroll to settings panel
+	settings_panel.add_child(scroll)
+
+	# Settings panel fills available height
+	settings_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+
+
+# Create Display Options card with checkboxes
+# qube:ignore-next-line - UI card creation requires many style and layout calls
+func _create_display_options_card() -> PanelContainer:
+	var card := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.15, 0.17, 0.22, 0.9)
+	style.border_color = Color(0.3, 0.35, 0.45, 0.5)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(12)
+	card.add_theme_stylebox_override("panel", style)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	card.add_child(vbox)
+
+	# Header
+	var header := Label.new()
+	header.text = "Display Options"
+	header.add_theme_font_size_override("font_size", 15)
+	header.add_theme_color_override("font_color", Color(0.9, 0.92, 0.95))
+	vbox.add_child(header)
+
+	# Checkboxes row
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 15)
+	vbox.add_child(hbox)
+
+	show_issues_check = CheckBox.new()
+	show_issues_check.text = "Show Issues"
+	show_issues_check.button_pressed = show_total_issues
+	hbox.add_child(show_issues_check)
+
+	show_debt_check = CheckBox.new()
+	show_debt_check.text = "Show Debt"
+	show_debt_check.button_pressed = show_debt
+	hbox.add_child(show_debt_check)
+
+	show_json_export_check = CheckBox.new()
+	show_json_export_check.text = "JSON Export"
+	show_json_export_check.button_pressed = show_json_export
+	hbox.add_child(show_json_export_check)
+
+	show_html_export_check = CheckBox.new()
+	show_html_export_check.text = "HTML Export"
+	show_html_export_check.button_pressed = show_html_export
+	hbox.add_child(show_html_export_check)
+
+	# Second row for scanning options
+	var hbox2 := HBoxContainer.new()
+	hbox2.add_theme_constant_override("separation", 15)
+	vbox.add_child(hbox2)
+
+	respect_gdignore_check = CheckBox.new()
+	respect_gdignore_check.text = "Respect .gdignore"
+	respect_gdignore_check.tooltip_text = "Skip directories containing .gdignore files (matches Godot editor behavior)"
+	respect_gdignore_check.button_pressed = respect_gdignore
+	respect_gdignore_check.toggled.connect(_on_respect_gdignore_toggled)
+	hbox2.add_child(respect_gdignore_check)
+
+	return card
+
+
+# Create Analysis Limits card with spinboxes
+# qube:ignore-next-line - UI card creation requires many style and layout calls
+func _create_limits_card() -> PanelContainer:
+	var card := PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.15, 0.17, 0.22, 0.9)
+	style.border_color = Color(0.3, 0.35, 0.45, 0.5)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(12)
+	card.add_theme_stylebox_override("panel", style)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	card.add_child(vbox)
+
+	# Header
+	var header := Label.new()
+	header.text = "Analysis Limits"
+	header.add_theme_font_size_override("font_size", 15)
+	header.add_theme_color_override("font_color", Color(0.9, 0.92, 0.95))
+	vbox.add_child(header)
+
+	# Grid for spinboxes (4 columns: label, spin, label, spin)
+	var grid := GridContainer.new()
+	grid.columns = 4
+	grid.add_theme_constant_override("h_separation", 10)
+	grid.add_theme_constant_override("v_separation", 6)
+	vbox.add_child(grid)
+
+	# Row 1: File lines soft/hard
+	max_lines_soft_spin = _add_spin_row(grid, "File Lines (warn):", 50, 1000, current_config.line_limit_soft if current_config else 200)
+	max_lines_hard_spin = _add_spin_row(grid, "File Lines (crit):", 100, 2000, current_config.line_limit_hard if current_config else 300)
+
+	# Row 2: Function lines / complexity warning
+	max_func_lines_spin = _add_spin_row(grid, "Func Lines:", 10, 200, current_config.function_line_limit if current_config else 30)
+	max_complexity_spin = _add_spin_row(grid, "Complexity (warn):", 5, 50, current_config.cyclomatic_warning if current_config else 10)
+
+	# Row 3: Func lines critical / complexity critical
+	func_lines_crit_spin = _add_spin_row(grid, "Func Lines (crit):", 20, 300, current_config.function_line_critical if current_config else 60)
+	max_complexity_crit_spin = _add_spin_row(grid, "Complexity (crit):", 5, 50, current_config.cyclomatic_critical if current_config else 15)
+
+	# Row 4: Max params / nesting
+	max_params_spin = _add_spin_row(grid, "Max Params:", 2, 15, current_config.max_parameters if current_config else 4)
+	max_nesting_spin = _add_spin_row(grid, "Max Nesting:", 2, 10, current_config.max_nesting if current_config else 3)
+
+	# Row 5: God class thresholds
+	god_class_funcs_spin = _add_spin_row(grid, "God Class Funcs:", 5, 50, current_config.god_class_functions if current_config else 20)
+	god_class_signals_spin = _add_spin_row(grid, "God Class Signals:", 3, 30, current_config.god_class_signals if current_config else 10)
+
+	return card
+
+
+# Helper to add a label + spinbox pair to a grid
+func _add_spin_row(grid: GridContainer, label_text: String, min_val: int, max_val: int, default_val: int) -> SpinBox:
+	var label := Label.new()
+	label.text = label_text
+	label.add_theme_color_override("font_color", Color(0.7, 0.72, 0.75))
+	grid.add_child(label)
+
+	var spin := SpinBox.new()
+	spin.min_value = min_val
+	spin.max_value = max_val
+	spin.value = default_val
+	spin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	grid.add_child(spin)
+
+	return spin

@@ -5,10 +5,6 @@
 
 A static code analysis plugin for GDScript that helps you maintain code quality, identify technical debt, and enforce best practices in your Godot 4.x projects.
 
-<p align="center">
-  <img src="screenshots/godot-qube.png" width="700" alt="Godot Qube Editor Dock">
-</p>
-
 ## Features
 
 ### Code Quality Checks
@@ -41,18 +37,7 @@ A static code analysis plugin for GDScript that helps you maintain code quality,
 - Configurable thresholds via settings panel
 - Real-time debt score calculation
 - Export to JSON or interactive HTML report
-
-### HTML Reports
-
-- Self-contained dark-themed HTML file
-- Interactive filtering by severity, type, and filename
-- Linked filters: type dropdown updates based on selected severity
-- Summary stats with issue counts and debt score
-- Opens automatically in your default browser
-
-<p align="center">
-  <img src="screenshots/godot-qube-html.png" width="700" alt="Godot Qube HTML Report">
-</p>
+- Respects `.gdignore` files (matches Godot editor behavior)
 
 ### CLI Support
 
@@ -82,7 +67,7 @@ godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --h
 
 1. Open Godot Editor
 2. Go to AssetLib tab
-3. Search for "Godot Qube"
+3. Search for "Godot Qube" or "GDScript Linter"
 4. Download and install
 5. Enable plugin: Project > Project Settings > Plugins > Godot Qube > Enable
 
@@ -150,6 +135,7 @@ naming_conventions = true
 unused_variables = true
 unused_parameters = true
 ignore_underscore_prefix = true
+respect_gdignore = true
 
 [exclude]
 paths = addons/, .godot/, tests/mocks/
@@ -193,10 +179,6 @@ jobs:
 | God class functions | 20 | - |
 | God class signals | 10 | - |
 
-<p align="center">
-  <img src="screenshots/godot-qube-settings.png" width="500" alt="Godot Qube Settings Panel">
-</p>
-
 ## Allowed Magic Numbers
 
 These numbers are not flagged as they are commonly self-explanatory:
@@ -215,9 +197,10 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 Contributions are welcome! Please feel free to submit issues and pull requests.
 
-## Roadmap
+## Links
 
-Nothing planned. Waiting for feedback...
+- [GitHub Repository](https://github.com/graydwarf/godot-qube)
+- [Report Issues](https://github.com/graydwarf/godot-qube/issues)
 
 ---
 
