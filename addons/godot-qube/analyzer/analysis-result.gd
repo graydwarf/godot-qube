@@ -8,6 +8,7 @@ const IssueClass = preload("res://addons/godot-qube/analyzer/issue.gd")
 const FileResultClass = preload("res://addons/godot-qube/analyzer/file-result.gd")
 
 var issues: Array = []
+var ignored_issues: Array = []
 var files_analyzed: int = 0
 var total_lines: int = 0
 var analysis_time_ms: int = 0
@@ -17,6 +18,9 @@ var file_results: Array = []
 
 func add_issue(issue) -> void:
 	issues.append(issue)
+
+func add_ignored_issue(issue) -> void:
+	ignored_issues.append(issue)
 
 func add_file_result(result) -> void:
 	file_results.append(result)

@@ -74,10 +74,12 @@ func _create_add_issue_callback(file_path: String) -> Callable:
 
 
 func _add_issue_from_checker(file_path: String, line_num: int, severity: String, check_id: String, message: String) -> void:
-	if _should_ignore_issue(line_num, check_id):
-		return
 	var sev = _severity_from_string(severity)
-	result.add_issue(IssueClass.create(file_path, line_num, sev, check_id, message))
+	var issue = IssueClass.create(file_path, line_num, sev, check_id, message)
+	if _should_ignore_issue(line_num, check_id):
+		result.add_ignored_issue(issue)
+		return
+	result.add_issue(issue)
 
 
 func _severity_from_string(severity: String) -> int:
@@ -127,9 +129,11 @@ func _should_ignore_issue(line_num: int, check_id: String) -> bool:
 
 
 func _add_issue(file_path: String, line_num: int, severity, check_id: String, message: String) -> void:
+	var issue = IssueClass.create(file_path, line_num, severity, check_id, message)
 	if _should_ignore_issue(line_num, check_id):
+		result.add_ignored_issue(issue)
 		return
-	result.add_issue(IssueClass.create(file_path, line_num, severity, check_id, message))
+	result.add_issue(issue)
 
 
 func _scan_directory(path: String) -> void:
