@@ -34,38 +34,57 @@ func should_ignore(line_num: int, check_id: String) -> bool:
 		return false
 
 	# Check if line is within an ignored range (function or block)
-	for ignored_range in _ignored_ranges:
-		if line_num >= ignored_range.start and line_num <= ignored_range.end:
-			if ignored_range.check_id == "" or ignored_range.check_id == check_id:
-				return true
+	if _is_in_ignored_range(line_num, check_id):
+		return true
 
 	var current_line: String = _lines[line_idx]
 
 	# Check current line for # qube:ignore or # qube:ignore:check-id
-	if IGNORE_PATTERN in current_line:
-		var ignore_pos := current_line.find(IGNORE_PATTERN)
-		if ignore_pos >= 0 and not IGNORE_NEXT_LINE_PATTERN in current_line:
-			var after_ignore := current_line.substr(ignore_pos + IGNORE_PATTERN.length())
-			if after_ignore.begins_with(":"):
-				var specific_check := after_ignore.substr(1).split(" ")[0].split("\t")[0].strip_edges()
-				return specific_check == check_id
-			else:
-				return true
+	if _matches_inline_ignore(current_line, check_id):
+		return true
 
 	# Check previous line for # qube:ignore-next-line
-	if line_idx > 0:
-		var prev_line: String = _lines[line_idx - 1]
-		if IGNORE_NEXT_LINE_PATTERN in prev_line:
-			var ignore_pos := prev_line.find(IGNORE_NEXT_LINE_PATTERN)
-			if ignore_pos >= 0:
-				var after_ignore := prev_line.substr(ignore_pos + IGNORE_NEXT_LINE_PATTERN.length())
-				if after_ignore.begins_with(":"):
-					var specific_check := after_ignore.substr(1).split(" ")[0].split("\t")[0].strip_edges()
-					return specific_check == check_id
-				else:
-					return true
+	if line_idx > 0 and _matches_ignore_next_line(_lines[line_idx - 1], check_id):
+		return true
 
 	return false
+
+
+# Check if line number falls within any ignored range
+func _is_in_ignored_range(line_num: int, check_id: String) -> bool:
+	for ignored_range in _ignored_ranges:
+		if line_num >= ignored_range.start and line_num <= ignored_range.end:
+			if ignored_range.check_id == "" or ignored_range.check_id == check_id:
+				return true
+	return false
+
+
+# Check if line has inline qube:ignore directive matching check_id
+func _matches_inline_ignore(line: String, check_id: String) -> bool:
+	if IGNORE_PATTERN not in line or IGNORE_NEXT_LINE_PATTERN in line:
+		return false
+	return _check_directive_match(line, IGNORE_PATTERN, check_id)
+
+
+# Check if line has qube:ignore-next-line directive matching check_id
+func _matches_ignore_next_line(line: String, check_id: String) -> bool:
+	if IGNORE_NEXT_LINE_PATTERN not in line:
+		return false
+	return _check_directive_match(line, IGNORE_NEXT_LINE_PATTERN, check_id)
+
+
+# Check if a directive in line matches the check_id (or ignores all if no specific id)
+func _check_directive_match(line: String, pattern: String, check_id: String) -> bool:
+	var ignore_pos := line.find(pattern)
+	if ignore_pos < 0:
+		return false
+
+	var after_ignore := line.substr(ignore_pos + pattern.length())
+	if after_ignore.begins_with(":"):
+		var specific_check := after_ignore.substr(1).split(" ")[0].split("\t")[0].strip_edges()
+		return specific_check == check_id
+
+	return true
 
 
 # Parse ignored ranges from qube:ignore-function and qube:ignore-block directives

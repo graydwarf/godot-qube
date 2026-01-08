@@ -658,47 +658,55 @@ func _format_ignored_section() -> String:
 func _on_link_clicked(meta: Variant) -> void:
 	var location := str(meta)
 
-	# Handle single issue Claude Code links
 	if location.begins_with("claude://"):
-		var encoded_data: String = location.substr(9)
-		var decoded_data: String = encoded_data.uri_decode()
-		var parts := decoded_data.split("|")
+		_handle_claude_single_link(location)
+	elif location.begins_with("claude-type://"):
+		_handle_claude_type_link(location)
+	elif location.begins_with("claude-severity://"):
+		_handle_claude_severity_link(location)
+	else:
+		_handle_file_link(location)
 
-		if parts.size() >= 5:
-			var issue_data := {
-				"file_path": parts[0],
-				"line": int(parts[1]),
-				"check_id": parts[2],
-				"severity": parts[3],
-				"message": parts[4]
-			}
-			_on_claude_button_pressed(issue_data)
-		else:
-			push_warning("Invalid Claude link format: %s" % location)
-		return
 
-	# Handle batch type-level Claude Code links
-	if location.begins_with("claude-type://"):
-		var type_key: String = location.substr(14).uri_decode()
-		if _grouped_issues_by_type.has(type_key):
-			var issues: Array = _grouped_issues_by_type[type_key]
-			var use_plan_mode := not Input.is_key_pressed(KEY_SHIFT)
-			_launch_claude_code_batch(issues, use_plan_mode)
-		else:
-			push_warning("No issues found for type key: %s" % type_key)
-		return
+func _handle_claude_single_link(location: String) -> void:
+	var encoded_data: String = location.substr(9)
+	var decoded_data: String = encoded_data.uri_decode()
+	var parts := decoded_data.split("|")
 
-	# Handle batch severity-level Claude Code links
-	if location.begins_with("claude-severity://"):
-		var severity_key: String = location.substr(18)
-		if _grouped_issues_by_severity.has(severity_key):
-			var issues: Array = _grouped_issues_by_severity[severity_key]
-			var use_plan_mode := not Input.is_key_pressed(KEY_SHIFT)
-			_launch_claude_code_batch(issues, use_plan_mode)
-		else:
-			push_warning("No issues found for severity: %s" % severity_key)
-		return
+	if parts.size() >= 5:
+		var issue_data := {
+			"file_path": parts[0],
+			"line": int(parts[1]),
+			"check_id": parts[2],
+			"severity": parts[3],
+			"message": parts[4]
+		}
+		_on_claude_button_pressed(issue_data)
+	else:
+		push_warning("Invalid Claude link format: %s" % location)
 
+
+func _handle_claude_type_link(location: String) -> void:
+	var type_key: String = location.substr(14).uri_decode()
+	if _grouped_issues_by_type.has(type_key):
+		var issues: Array = _grouped_issues_by_type[type_key]
+		var use_plan_mode := not Input.is_key_pressed(KEY_SHIFT)
+		_launch_claude_code_batch(issues, use_plan_mode)
+	else:
+		push_warning("No issues found for type key: %s" % type_key)
+
+
+func _handle_claude_severity_link(location: String) -> void:
+	var severity_key: String = location.substr(18)
+	if _grouped_issues_by_severity.has(severity_key):
+		var issues: Array = _grouped_issues_by_severity[severity_key]
+		var use_plan_mode := not Input.is_key_pressed(KEY_SHIFT)
+		_launch_claude_code_batch(issues, use_plan_mode)
+	else:
+		push_warning("No issues found for severity: %s" % severity_key)
+
+
+func _handle_file_link(location: String) -> void:
 	var parts := location.rsplit(":", true, 1)
 
 	if parts.size() < 2:
