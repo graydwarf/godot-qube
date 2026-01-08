@@ -65,6 +65,7 @@ var god_class_signals_spin: SpinBox
 var claude_enabled_check: CheckBox
 var claude_command_edit: LineEdit
 var claude_reset_button: Button
+var claude_instructions_edit: TextEdit
 
 # State
 var current_result  # AnalysisResult instance
@@ -83,6 +84,7 @@ var scan_addons: bool = false  # Include addons/ folder in scans (disabled by de
 # Claude Code settings
 var claude_code_enabled: bool = false
 var claude_code_command: String = "claude --permission-mode plan"
+var claude_custom_instructions: String = ""
 const CLAUDE_CODE_DEFAULT_COMMAND := "claude --permission-mode plan"
 
 # Analysis limits defaults
@@ -305,8 +307,10 @@ func _load_settings() -> void:
 	# Load Claude Code settings
 	claude_code_enabled = editor_settings.get_setting("code_quality/claude/enabled") if editor_settings.has_setting("code_quality/claude/enabled") else false
 	claude_code_command = editor_settings.get_setting("code_quality/claude/launch_command") if editor_settings.has_setting("code_quality/claude/launch_command") else CLAUDE_CODE_DEFAULT_COMMAND
+	claude_custom_instructions = editor_settings.get_setting("code_quality/claude/custom_instructions") if editor_settings.has_setting("code_quality/claude/custom_instructions") else ""
 	claude_enabled_check.button_pressed = claude_code_enabled
 	claude_command_edit.text = claude_code_command
+	claude_instructions_edit.text = claude_custom_instructions
 
 
 func _save_setting(key: String, value: Variant) -> void:
@@ -778,6 +782,11 @@ func _on_claude_command_changed(new_text: String) -> void:
 	_save_setting("code_quality/claude/launch_command", new_text)
 
 
+func _on_claude_instructions_changed() -> void:
+	claude_custom_instructions = claude_instructions_edit.text
+	_save_setting("code_quality/claude/custom_instructions", claude_custom_instructions)
+
+
 func _on_claude_reset_pressed() -> void:
 	claude_code_command = CLAUDE_CODE_DEFAULT_COMMAND
 	claude_command_edit.text = CLAUDE_CODE_DEFAULT_COMMAND
@@ -1018,6 +1027,10 @@ func _on_claude_button_pressed(issue: Dictionary) -> void:
 	prompt += "Severity: %s\n" % issue.severity
 	prompt += "Message: %s\n\n" % issue.message
 	prompt += "Analyze this issue and suggest a fix."
+
+	# Append custom instructions if provided
+	if not claude_custom_instructions.strip_edges().is_empty():
+		prompt += "\n\n" + claude_custom_instructions
 
 	# Escape single quotes for PowerShell
 	var escaped_prompt := prompt.replace("'", "''")
@@ -1354,7 +1367,7 @@ func _create_claude_code_card() -> PanelContainer:
 
 	# Description
 	var desc := Label.new()
-	desc.text = "Adds AI buttons to scan results for launching Claude Code with issue context. Requires claude-code installed & setup."
+	desc.text = "Adds Claude Code button to launch directly into plan mode with issue context."
 	desc.add_theme_font_size_override("font_size", 11)
 	desc.add_theme_color_override("font_color", Color(0.5, 0.52, 0.55))
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -1385,5 +1398,26 @@ func _create_claude_code_card() -> PanelContainer:
 	claude_reset_button.custom_minimum_size = Vector2(16, 16)
 	claude_reset_button.pressed.connect(_on_claude_reset_pressed)
 	cmd_hbox.add_child(claude_reset_button)
+
+	# Hint label
+	var hint := Label.new()
+	hint.text = "Issue context is passed automatically. Add CLI flags as needed (e.g. --verbose)."
+	hint.add_theme_font_size_override("font_size", 10)
+	hint.add_theme_color_override("font_color", Color(0.45, 0.47, 0.5))
+	vbox.add_child(hint)
+
+	# Custom instructions label
+	var instructions_label := Label.new()
+	instructions_label.text = "Custom Instructions (optional):"
+	instructions_label.add_theme_color_override("font_color", Color(0.7, 0.72, 0.75))
+	vbox.add_child(instructions_label)
+
+	# Custom instructions text area
+	claude_instructions_edit = TextEdit.new()
+	claude_instructions_edit.placeholder_text = "Add extra instructions to append to the prompt..."
+	claude_instructions_edit.custom_minimum_size = Vector2(0, 60)
+	claude_instructions_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	claude_instructions_edit.text_changed.connect(_on_claude_instructions_changed)
+	vbox.add_child(claude_instructions_edit)
 
 	return card
