@@ -1200,12 +1200,12 @@ func _create_display_options_card() -> PanelContainer:
 	hbox.add_child(show_debt_check)
 
 	show_json_export_check = CheckBox.new()
-	show_json_export_check.text = "JSON Export"
+	show_json_export_check.text = "Show JSON Export"
 	show_json_export_check.button_pressed = show_json_export
 	hbox.add_child(show_json_export_check)
 
 	show_html_export_check = CheckBox.new()
-	show_html_export_check.text = "HTML Export"
+	show_html_export_check.text = "Show HTML Export"
 	show_html_export_check.button_pressed = show_html_export
 	hbox.add_child(show_html_export_check)
 

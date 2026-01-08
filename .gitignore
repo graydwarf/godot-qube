@@ -16,3 +16,10 @@ mono_crash.*.json
 
 # Analysis output
 code_quality_report.json
+code_quality_report.html
+
+# Local state
+.gdqube_state.json
+
+# Claude Code (user-specific)
+.claude/
