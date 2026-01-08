@@ -65,7 +65,18 @@ var settings_controls: Dictionary = {}
 
 
 func _ready() -> void:
-	# Get node references
+	_init_node_references()
+	if not _validate_required_nodes():
+		return
+	_setup_background()
+	_init_config_and_settings_panel()
+	_init_settings_manager()
+	_connect_signals()
+	_setup_filters()
+	_apply_initial_visibility()
+
+
+func _init_node_references() -> void:
 	results_label = $VBox/ScrollContainer/ResultsLabel
 	scan_button = $VBox/Toolbar/ScanButton
 	export_button = $VBox/Toolbar/ExportButton
@@ -76,33 +87,38 @@ func _ready() -> void:
 	settings_button = $VBox/Toolbar/SettingsButton
 	settings_panel = $VBox/SettingsPanel
 
+
+func _validate_required_nodes() -> bool:
 	if not results_label or not scan_button or not severity_filter:
 		push_error("Code Quality: Failed to find UI nodes")
-		return
+		return false
+	return true
 
-	# Darken the dock background
+
+func _setup_background() -> void:
 	var bg := ColorRect.new()
 	bg.color = Color(0.12, 0.12, 0.14, 1.0)
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 	move_child(bg, 0)
 
-	# Initialize config
-	current_config = AnalysisConfigScript.new()
 
-	# Build settings panel using card builder
+func _init_config_and_settings_panel() -> void:
+	current_config = AnalysisConfigScript.new()
 	var reset_icon = load("res://addons/godot-qube/icons/arrow-reset.svg")
 	var card_builder = SettingsCardBuilderScript.new(reset_icon)
 	card_builder.build_settings_panel(settings_panel, settings_controls)
 
-	# Initialize settings manager
+
+func _init_settings_manager() -> void:
 	settings_manager = SettingsManagerScript.new(current_config)
 	settings_manager.controls = settings_controls
 	settings_manager.display_refresh_needed.connect(_on_display_refresh_needed)
 	settings_manager.load_settings()
 	settings_manager.connect_controls(export_button, html_export_button)
 
-	# Connect signals
+
+func _connect_signals() -> void:
 	results_label.meta_underlined = false
 	results_label.meta_clicked.connect(_on_link_clicked)
 	scan_button.pressed.connect(_on_scan_pressed)
@@ -113,17 +129,17 @@ func _ready() -> void:
 	file_filter.text_changed.connect(_on_file_filter_changed)
 	settings_button.pressed.connect(_on_settings_pressed)
 
-	# Setup severity filter options
+
+func _setup_filters() -> void:
 	severity_filter.clear()
 	severity_filter.add_item("All Severities", 0)
 	severity_filter.add_item("Critical", 1)
 	severity_filter.add_item("Warnings", 2)
 	severity_filter.add_item("Info", 3)
-
-	# Setup type filter options
 	_populate_type_filter()
 
-	# Apply initial visibility
+
+func _apply_initial_visibility() -> void:
 	export_button.visible = settings_manager.show_json_export
 	html_export_button.visible = settings_manager.show_html_export
 	export_button.disabled = true
