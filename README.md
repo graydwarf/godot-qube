@@ -61,10 +61,19 @@ Runs in seconds with no external dependencies. Can help reduce token usage on la
 Launch [Claude Code](https://claude.ai/code) directly from scan results to get AI-assisted fixes:
 
 - Enable in Settings > Claude Code Integration
-- Click the Claude icon next to any issue to launch Claude Code in plan mode
 - Issue context (file, line, type, message) is passed automatically
 - Add custom instructions to customize the AI prompt
 - Requires [claude-code CLI](https://github.com/anthropics/claude-code) installed
+
+**Interaction Options:**
+
+| Action | Behavior |
+|--------|----------|
+| **Click** | Launch Claude Code in plan mode (safe - reviews before making changes) |
+| **Shift+Click** | Launch Claude Code in immediate mode (fixes without planning) |
+| **Right-click** | Context menu with "Plan Fix" and "Fix Immediately" options |
+
+Hover over any Claude icon to see a tooltip with these options.
 
 ### CLI Support
 
@@ -128,6 +137,40 @@ var another_magic = 100  # qube:ignore
 
 # Ignore specific check
 var debug_print = true  # qube:ignore:magic-number
+```
+
+### Function and Block Ignores
+
+Ignore all issues within an entire function:
+
+```gdscript
+# qube:ignore-function - CLI output requires print statements
+func _print_help() -> void:
+    print("Usage: ...")
+    print("Options:")
+    print("  --help  Show this message")
+
+# Ignore only specific check in function
+# qube:ignore-function:print-statement
+func _output_results() -> void:
+    print("Results:")
+    print(data)
+```
+
+Ignore a block of code:
+
+```gdscript
+# qube:ignore-block-start
+var magic1 = 42
+var magic2 = 100
+var magic3 = 256
+# qube:ignore-block-end
+
+# Ignore specific check in block
+# qube:ignore-block-start:magic-number
+var threshold = 1000
+var limit = 5000
+# qube:ignore-block-end
 ```
 
 ### Project Configuration

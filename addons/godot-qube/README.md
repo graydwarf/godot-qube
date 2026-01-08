@@ -103,6 +103,40 @@ var another_magic = 100  # qube:ignore
 var debug_print = true  # qube:ignore:magic-number
 ```
 
+### Function and Block Ignores
+
+Ignore all issues within an entire function:
+
+```gdscript
+# qube:ignore-function - CLI output requires print statements
+func _print_help() -> void:
+    print("Usage: ...")
+    print("Options:")
+    print("  --help  Show this message")
+
+# Ignore only specific check in function
+# qube:ignore-function:print-statement
+func _output_results() -> void:
+    print("Results:")
+    print(data)
+```
+
+Ignore a block of code:
+
+```gdscript
+# qube:ignore-block-start
+var magic1 = 42
+var magic2 = 100
+var magic3 = 256
+# qube:ignore-block-end
+
+# Ignore specific check in block
+# qube:ignore-block-start:magic-number
+var threshold = 1000
+var limit = 5000
+# qube:ignore-block-end
+```
+
 ### Project Configuration
 
 Create a `.gdqube.cfg` file in your project root to customize settings:

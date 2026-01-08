@@ -61,6 +61,7 @@ func _parse_arguments() -> void:
 
 		i += 1
 
+# qube:ignore-function:print-statement - CLI help output
 func _print_help() -> void:
 	print("")
 	print("Godot Qube - Code Quality Analyzer for GDScript")
@@ -101,9 +102,11 @@ func _run_analysis() -> void:
 
 	_exit_code = result.get_exit_code()
 
+# qube:ignore-function:print-statement - CLI JSON output
 func _output_json(result) -> void:
 	print(JSON.stringify(result.to_dict(), "\t"))
 
+# qube:ignore-function:print-statement - CLI clickable output
 func _output_clickable(result) -> void:
 	# Format that Godot Output panel makes clickable
 	print("")
@@ -138,7 +141,7 @@ func _output_clickable(result) -> void:
 
 	print("Debt Score: %d | Time: %dms" % [result.get_total_debt_score(), result.analysis_time_ms])
 
-# qube:ignore-next-line - Console output formatting requires many print calls
+# qube:ignore-function:print-statement - Console output formatting
 func _output_console(result) -> void:
 	print("")
 	print("=" .repeat(60))
@@ -217,6 +220,7 @@ func _output_console(result) -> void:
 	print("=" .repeat(60))
 
 
+# qube:ignore-function:print-statement - CLI HTML output
 func _output_html(result) -> void:
 	var output_path := _output_file if _output_file != "" else "code_quality_report.html"
 
