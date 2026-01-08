@@ -56,6 +56,13 @@ var current_severity_filter: String = "all"
 var current_type_filter: String = "all"
 var current_file_filter: String = ""
 
+# Claude button interaction state
+var _hovered_claude_link: String = ""
+var _claude_context_menu: PopupMenu
+var _claude_tooltip: PanelContainer
+var _grouped_issues_by_type: Dictionary = {}  # check_id -> Array of issues
+var _grouped_issues_by_severity: Dictionary = {}  # severity -> Array of issues
+
 # Current config instance for settings
 var current_config: Resource
 
@@ -121,6 +128,9 @@ func _init_settings_manager() -> void:
 func _connect_signals() -> void:
 	results_label.meta_underlined = false
 	results_label.meta_clicked.connect(_on_link_clicked)
+	results_label.meta_hover_started.connect(_on_meta_hover_started)
+	results_label.meta_hover_ended.connect(_on_meta_hover_ended)
+	results_label.gui_input.connect(_on_results_gui_input)
 	scan_button.pressed.connect(_on_scan_pressed)
 	export_button.pressed.connect(_on_export_pressed)
 	html_export_button.pressed.connect(_on_html_export_pressed)
@@ -128,6 +138,8 @@ func _connect_signals() -> void:
 	type_filter.item_selected.connect(_on_type_filter_changed)
 	file_filter.text_changed.connect(_on_file_filter_changed)
 	settings_button.pressed.connect(_on_settings_pressed)
+	_setup_claude_context_menu()
+	_setup_claude_tooltip()
 
 
 func _setup_filters() -> void:
@@ -294,6 +306,107 @@ func _on_settings_pressed() -> void:
 	$VBox/ScrollContainer.visible = not settings_panel.visible
 
 
+func _setup_claude_context_menu() -> void:
+	_claude_context_menu = PopupMenu.new()
+	_claude_context_menu.add_item("Plan Fix (default)", 0)
+	_claude_context_menu.add_item("Fix Immediately", 1)
+	_claude_context_menu.id_pressed.connect(_on_claude_context_menu_selected)
+	add_child(_claude_context_menu)
+
+
+func _setup_claude_tooltip() -> void:
+	var label := Label.new()
+	label.text = "Click: Plan mode | Shift+Click: Fix now | Right-click: Options"
+	label.add_theme_font_size_override("font_size", 11)
+	label.add_theme_color_override("font_color", Color(0.85, 0.85, 0.85))
+
+	_claude_tooltip = PanelContainer.new()
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.15, 0.15, 0.18, 0.95)
+	style.border_color = Color(0.3, 0.3, 0.35)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(4)
+	style.set_content_margin_all(6)
+	_claude_tooltip.add_theme_stylebox_override("panel", style)
+	_claude_tooltip.add_child(label)
+	_claude_tooltip.visible = false
+	_claude_tooltip.z_index = 100
+	add_child(_claude_tooltip)
+
+
+func _on_meta_hover_started(meta: Variant) -> void:
+	var link := str(meta)
+	if link.begins_with("claude://") or link.begins_with("claude-type://") or link.begins_with("claude-severity://"):
+		_hovered_claude_link = link
+		_show_claude_tooltip()
+
+
+func _on_meta_hover_ended(_meta: Variant) -> void:
+	_hovered_claude_link = ""
+	_hide_claude_tooltip()
+
+
+func _show_claude_tooltip() -> void:
+	if not _claude_tooltip or not settings_manager.claude_code_enabled:
+		return
+	var mouse_pos := get_global_mouse_position()
+	_claude_tooltip.global_position = mouse_pos + Vector2(15, -30)
+	_claude_tooltip.visible = true
+
+
+func _hide_claude_tooltip() -> void:
+	if _claude_tooltip:
+		_claude_tooltip.visible = false
+
+
+func _on_results_gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_RIGHT and mb.pressed:
+			if _hovered_claude_link != "" and settings_manager.claude_code_enabled:
+				_hide_claude_tooltip()
+				_claude_context_menu.position = DisplayServer.mouse_get_position() + Vector2i(16, -8)
+				_claude_context_menu.popup()
+				get_viewport().set_input_as_handled()
+
+
+func _on_claude_context_menu_selected(id: int) -> void:
+	if _hovered_claude_link == "":
+		return
+
+	var use_plan_mode := (id == 0)
+
+	# Handle single issue links
+	if _hovered_claude_link.begins_with("claude://"):
+		var encoded_data: String = _hovered_claude_link.substr(9)
+		var decoded_data: String = encoded_data.uri_decode()
+		var parts := decoded_data.split("|")
+
+		if parts.size() >= 5:
+			var issue_data := {
+				"file_path": parts[0],
+				"line": int(parts[1]),
+				"check_id": parts[2],
+				"severity": parts[3],
+				"message": parts[4]
+			}
+			_launch_claude_code(issue_data, use_plan_mode)
+		return
+
+	# Handle batch type-level links
+	if _hovered_claude_link.begins_with("claude-type://"):
+		var type_key: String = _hovered_claude_link.substr(14).uri_decode()
+		if _grouped_issues_by_type.has(type_key):
+			_launch_claude_code_batch(_grouped_issues_by_type[type_key], use_plan_mode)
+		return
+
+	# Handle batch severity-level links
+	if _hovered_claude_link.begins_with("claude-severity://"):
+		var severity_key: String = _hovered_claude_link.substr(18)
+		if _grouped_issues_by_severity.has(severity_key):
+			_launch_claude_code_batch(_grouped_issues_by_severity[severity_key], use_plan_mode)
+
+
 func _matches_severity(issue) -> bool:
 	if current_severity_filter == "all":
 		return true
@@ -364,11 +477,17 @@ func _group_issues_by_severity(issues: Array) -> Dictionary:
 	return grouped
 
 
-func _format_severity_section(issues: Array, label: String, emoji: String, color: String) -> String:
+func _format_severity_section(issues: Array, label: String, emoji: String, color: String, severity_key: String) -> String:
 	if issues.size() == 0:
 		return ""
-	var bbcode := "[color=%s][b]%s %s (%d)[/b][/color]\n" % [color, emoji, label, issues.size()]
-	bbcode += _format_issues_by_type(issues, color)
+	var bbcode := "[color=%s][b]%s %s (%d)[/b][/color]" % [color, emoji, label, issues.size()]
+
+	# Add Claude Code button for severity level if enabled
+	if settings_manager.claude_code_enabled:
+		bbcode += " [url=claude-severity://%s][img=20x20]res://addons/godot-qube/icons/claude.png[/img][/url]" % severity_key
+
+	bbcode += "\n"
+	bbcode += _format_issues_by_type(issues, color, severity_key)
 	return bbcode + "\n"
 
 
@@ -376,15 +495,27 @@ func _display_results() -> void:
 	if not current_result:
 		return
 
+	# Clear grouped issues for batch Claude operations
+	_grouped_issues_by_type.clear()
+	_grouped_issues_by_severity.clear()
+
 	var bbcode := _build_report_header()
 	var filtered := _filter_issues(current_result.issues.duplicate())
 
 	bbcode += _build_active_filters_text(filtered.size())
 
 	var grouped := _group_issues_by_severity(filtered)
-	bbcode += _format_severity_section(grouped.critical, "CRITICAL", "🔴", "#ff6b6b")
-	bbcode += _format_severity_section(grouped.warning, "WARNINGS", "🟡", "#ffd93d")
-	bbcode += _format_severity_section(grouped.info, "INFO", "🔵", "#6bcb77")
+
+	# Store grouped issues for batch Claude operations
+	_grouped_issues_by_severity = {
+		"critical": grouped.critical,
+		"warning": grouped.warning,
+		"info": grouped.info
+	}
+
+	bbcode += _format_severity_section(grouped.critical, "CRITICAL", "🔴", "#ff6b6b", "critical")
+	bbcode += _format_severity_section(grouped.warning, "WARNINGS", "🟡", "#ffd93d", "warning")
+	bbcode += _format_severity_section(grouped.info, "INFO", "🔵", "#6bcb77", "info")
 
 	if filtered.size() == 0:
 		bbcode += "[color=#888888]No issues matching current filters[/color]"
@@ -395,7 +526,7 @@ func _display_results() -> void:
 	results_label.text = bbcode
 
 
-func _format_issues_by_type(issues: Array, color: String) -> String:
+func _format_issues_by_type(issues: Array, color: String, severity_key: String) -> String:
 	var bbcode := ""
 
 	var by_type: Dictionary = {}
@@ -404,6 +535,11 @@ func _format_issues_by_type(issues: Array, color: String) -> String:
 		if not by_type.has(check_id):
 			by_type[check_id] = []
 		by_type[check_id].append(issue)
+
+	# Store grouped issues by type for batch Claude operations
+	for check_id in by_type:
+		var type_key := "%s|%s" % [severity_key, check_id]
+		_grouped_issues_by_type[type_key] = by_type[check_id]
 
 	var type_keys := by_type.keys()
 	type_keys.sort_custom(func(a, b): return by_type[a].size() > by_type[b].size())
@@ -417,7 +553,14 @@ func _format_issues_by_type(issues: Array, color: String) -> String:
 			bbcode += "\n"
 		is_first_type = false
 
-		bbcode += "  [color=#aaaaaa]── %s (%d) ──[/color]\n" % [type_name, type_issues.size()]
+		bbcode += "  [color=#aaaaaa]── %s (%d)[/color]" % [type_name, type_issues.size()]
+
+		# Add Claude Code button for type level if enabled
+		if settings_manager.claude_code_enabled:
+			var type_key := "%s|%s" % [severity_key, check_id]
+			bbcode += " [url=claude-type://%s][img=16x16]res://addons/godot-qube/icons/claude.png[/img][/url]" % type_key.uri_encode()
+
+		bbcode += " [color=#aaaaaa]──[/color]\n"
 
 		var shown := 0
 		for issue in type_issues:
@@ -515,7 +658,7 @@ func _format_ignored_section() -> String:
 func _on_link_clicked(meta: Variant) -> void:
 	var location := str(meta)
 
-	# Handle Claude Code links
+	# Handle single issue Claude Code links
 	if location.begins_with("claude://"):
 		var encoded_data: String = location.substr(9)
 		var decoded_data: String = encoded_data.uri_decode()
@@ -532,6 +675,28 @@ func _on_link_clicked(meta: Variant) -> void:
 			_on_claude_button_pressed(issue_data)
 		else:
 			push_warning("Invalid Claude link format: %s" % location)
+		return
+
+	# Handle batch type-level Claude Code links
+	if location.begins_with("claude-type://"):
+		var type_key: String = location.substr(14).uri_decode()
+		if _grouped_issues_by_type.has(type_key):
+			var issues: Array = _grouped_issues_by_type[type_key]
+			var use_plan_mode := not Input.is_key_pressed(KEY_SHIFT)
+			_launch_claude_code_batch(issues, use_plan_mode)
+		else:
+			push_warning("No issues found for type key: %s" % type_key)
+		return
+
+	# Handle batch severity-level Claude Code links
+	if location.begins_with("claude-severity://"):
+		var severity_key: String = location.substr(18)
+		if _grouped_issues_by_severity.has(severity_key):
+			var issues: Array = _grouped_issues_by_severity[severity_key]
+			var use_plan_mode := not Input.is_key_pressed(KEY_SHIFT)
+			_launch_claude_code_batch(issues, use_plan_mode)
+		else:
+			push_warning("No issues found for severity: %s" % severity_key)
 		return
 
 	var parts := location.rsplit(":", true, 1)
@@ -552,6 +717,13 @@ func _on_link_clicked(meta: Variant) -> void:
 
 
 func _on_claude_button_pressed(issue: Dictionary) -> void:
+	var use_plan_mode := not Input.is_key_pressed(KEY_SHIFT)
+	_launch_claude_code(issue, use_plan_mode)
+
+
+# Launches Claude Code with the given issue context
+# use_plan_mode: true = plan mode (safe), false = immediate execution
+func _launch_claude_code(issue: Dictionary, use_plan_mode: bool) -> void:
 	var project_path := ProjectSettings.globalize_path("res://")
 
 	var prompt := "Code quality issue to fix:\n\n"
@@ -560,16 +732,78 @@ func _on_claude_button_pressed(issue: Dictionary) -> void:
 	prompt += "Type: %s\n" % issue.check_id
 	prompt += "Severity: %s\n" % issue.severity
 	prompt += "Message: %s\n\n" % issue.message
-	prompt += "Analyze this issue and suggest a fix."
+
+	if use_plan_mode:
+		prompt += "Analyze this issue and suggest a fix."
+	else:
+		prompt += "Fix this issue now."
 
 	if not settings_manager.claude_custom_instructions.strip_edges().is_empty():
 		prompt += "\n\n" + settings_manager.claude_custom_instructions
 
 	var escaped_prompt := prompt.replace("'", "''")
 
+	# Determine command based on mode
+	var command: String
+	if use_plan_mode:
+		command = settings_manager.claude_code_command
+	else:
+		# Remove --permission-mode plan if present for immediate execution
+		command = settings_manager.claude_code_command.replace("--permission-mode plan", "").strip_edges()
+		if command.is_empty():
+			command = "claude"
+
 	var args: PackedStringArray = [
 		"-d", project_path,
 		"powershell", "-NoProfile", "-NoExit",
-		"-Command", "%s '%s'" % [settings_manager.claude_code_command, escaped_prompt]
+		"-Command", "%s '%s'" % [command, escaped_prompt]
+	]
+	OS.create_process("wt", args)
+
+
+# Launches Claude Code with multiple issues (batch fix)
+func _launch_claude_code_batch(issues: Array, use_plan_mode: bool) -> void:
+	if issues.is_empty():
+		return
+
+	var project_path := ProjectSettings.globalize_path("res://")
+	var Issue = IssueScript
+
+	var prompt := "Code quality issues to fix (%d total):\n\n" % issues.size()
+
+	for i in range(issues.size()):
+		var issue = issues[i]
+		var severity_str: String = "unknown"
+		match issue.severity:
+			Issue.Severity.CRITICAL: severity_str = "critical"
+			Issue.Severity.WARNING: severity_str = "warning"
+			Issue.Severity.INFO: severity_str = "info"
+
+		prompt += "%d. %s:%d\n" % [i + 1, issue.file_path, issue.line]
+		prompt += "   Type: %s | Severity: %s\n" % [issue.check_id, severity_str]
+		prompt += "   %s\n\n" % issue.message
+
+	if use_plan_mode:
+		prompt += "Analyze these issues and suggest fixes for each."
+	else:
+		prompt += "Fix all these issues now."
+
+	if not settings_manager.claude_custom_instructions.strip_edges().is_empty():
+		prompt += "\n\n" + settings_manager.claude_custom_instructions
+
+	var escaped_prompt := prompt.replace("'", "''")
+
+	var command: String
+	if use_plan_mode:
+		command = settings_manager.claude_code_command
+	else:
+		command = settings_manager.claude_code_command.replace("--permission-mode plan", "").strip_edges()
+		if command.is_empty():
+			command = "claude"
+
+	var args: PackedStringArray = [
+		"-d", project_path,
+		"powershell", "-NoProfile", "-NoExit",
+		"-Command", "%s '%s'" % [command, escaped_prompt]
 	]
 	OS.create_process("wt", args)
