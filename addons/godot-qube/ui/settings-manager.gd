@@ -74,51 +74,49 @@ func _apply_to_ui() -> void:
 	if controls.is_empty():
 		return
 
-	# Display options
-	if controls.has("show_issues_check"):
-		controls.show_issues_check.button_pressed = show_total_issues
-	if controls.has("show_debt_check"):
-		controls.show_debt_check.button_pressed = show_debt
-	if controls.has("show_json_export_check"):
-		controls.show_json_export_check.button_pressed = show_json_export
-	if controls.has("show_html_export_check"):
-		controls.show_html_export_check.button_pressed = show_html_export
-	if controls.has("show_ignored_check"):
-		controls.show_ignored_check.button_pressed = show_ignored_issues
-	if controls.has("respect_gdignore_check"):
-		controls.respect_gdignore_check.button_pressed = respect_gdignore
-	if controls.has("scan_addons_check"):
-		controls.scan_addons_check.button_pressed = scan_addons
+	# Boolean controls (CheckBox/CheckButton)
+	var bool_mappings := {
+		"show_issues_check": func(): return show_total_issues,
+		"show_debt_check": func(): return show_debt,
+		"show_json_export_check": func(): return show_json_export,
+		"show_html_export_check": func(): return show_html_export,
+		"show_ignored_check": func(): return show_ignored_issues,
+		"respect_gdignore_check": func(): return respect_gdignore,
+		"scan_addons_check": func(): return scan_addons,
+		"claude_enabled_check": func(): return claude_code_enabled,
+	}
 
-	# Analysis limits
-	if controls.has("max_lines_soft_spin"):
-		controls.max_lines_soft_spin.value = config.line_limit_soft
-	if controls.has("max_lines_hard_spin"):
-		controls.max_lines_hard_spin.value = config.line_limit_hard
-	if controls.has("max_func_lines_spin"):
-		controls.max_func_lines_spin.value = config.function_line_limit
-	if controls.has("max_complexity_spin"):
-		controls.max_complexity_spin.value = config.cyclomatic_warning
-	if controls.has("func_lines_crit_spin"):
-		controls.func_lines_crit_spin.value = config.function_line_critical
-	if controls.has("max_complexity_crit_spin"):
-		controls.max_complexity_crit_spin.value = config.cyclomatic_critical
-	if controls.has("max_params_spin"):
-		controls.max_params_spin.value = config.max_parameters
-	if controls.has("max_nesting_spin"):
-		controls.max_nesting_spin.value = config.max_nesting
-	if controls.has("god_class_funcs_spin"):
-		controls.god_class_funcs_spin.value = config.god_class_functions
-	if controls.has("god_class_signals_spin"):
-		controls.god_class_signals_spin.value = config.god_class_signals
+	for control_key in bool_mappings:
+		if controls.has(control_key):
+			controls[control_key].button_pressed = bool_mappings[control_key].call()
 
-	# Claude Code settings
-	if controls.has("claude_enabled_check"):
-		controls.claude_enabled_check.button_pressed = claude_code_enabled
-	if controls.has("claude_command_edit"):
-		controls.claude_command_edit.text = claude_code_command
-	if controls.has("claude_instructions_edit"):
-		controls.claude_instructions_edit.text = claude_custom_instructions
+	# Numeric controls (SpinBox)
+	var spin_mappings := {
+		"max_lines_soft_spin": func(): return config.line_limit_soft,
+		"max_lines_hard_spin": func(): return config.line_limit_hard,
+		"max_func_lines_spin": func(): return config.function_line_limit,
+		"max_complexity_spin": func(): return config.cyclomatic_warning,
+		"func_lines_crit_spin": func(): return config.function_line_critical,
+		"max_complexity_crit_spin": func(): return config.cyclomatic_critical,
+		"max_params_spin": func(): return config.max_parameters,
+		"max_nesting_spin": func(): return config.max_nesting,
+		"god_class_funcs_spin": func(): return config.god_class_functions,
+		"god_class_signals_spin": func(): return config.god_class_signals,
+	}
+
+	for control_key in spin_mappings:
+		if controls.has(control_key):
+			controls[control_key].value = spin_mappings[control_key].call()
+
+	# Text controls (LineEdit/TextEdit)
+	var text_mappings := {
+		"claude_command_edit": func(): return claude_code_command,
+		"claude_instructions_edit": func(): return claude_custom_instructions,
+	}
+
+	for control_key in text_mappings:
+		if controls.has(control_key):
+			controls[control_key].text = text_mappings[control_key].call()
 
 
 # Connect all UI control signals
