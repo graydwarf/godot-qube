@@ -25,6 +25,7 @@ var claude_custom_instructions: String = ""
 # References
 var config: Resource  # QubeConfig
 var controls: Dictionary = {}
+var _limits_handler: QubeSettingsLimitsHandler
 
 
 func _init(p_config: Resource) -> void:
@@ -137,29 +138,9 @@ func connect_controls(export_btn: Button, html_export_btn: Button) -> void:
 	if controls.has("scan_addons_check"):
 		controls.scan_addons_check.toggled.connect(_on_scan_addons_toggled)
 
-	# Analysis limits
-	if controls.has("max_lines_soft_spin"):
-		controls.max_lines_soft_spin.value_changed.connect(_on_max_lines_soft_changed)
-	if controls.has("max_lines_hard_spin"):
-		controls.max_lines_hard_spin.value_changed.connect(_on_max_lines_hard_changed)
-	if controls.has("max_func_lines_spin"):
-		controls.max_func_lines_spin.value_changed.connect(_on_max_func_lines_changed)
-	if controls.has("max_complexity_spin"):
-		controls.max_complexity_spin.value_changed.connect(_on_max_complexity_changed)
-	if controls.has("func_lines_crit_spin"):
-		controls.func_lines_crit_spin.value_changed.connect(_on_func_lines_crit_changed)
-	if controls.has("max_complexity_crit_spin"):
-		controls.max_complexity_crit_spin.value_changed.connect(_on_max_complexity_crit_changed)
-	if controls.has("max_params_spin"):
-		controls.max_params_spin.value_changed.connect(_on_max_params_changed)
-	if controls.has("max_nesting_spin"):
-		controls.max_nesting_spin.value_changed.connect(_on_max_nesting_changed)
-	if controls.has("god_class_funcs_spin"):
-		controls.god_class_funcs_spin.value_changed.connect(_on_god_class_funcs_changed)
-	if controls.has("god_class_signals_spin"):
-		controls.god_class_signals_spin.value_changed.connect(_on_god_class_signals_changed)
-	if controls.has("reset_all_limits_btn"):
-		controls.reset_all_limits_btn.pressed.connect(_on_reset_all_limits_pressed)
+	# Analysis limits (delegated to handler)
+	_limits_handler = QubeSettingsLimitsHandler.new(config, controls, save_setting)
+	_limits_handler.connect_controls()
 
 	# Claude Code settings
 	if controls.has("claude_enabled_check"):
@@ -226,81 +207,6 @@ func _on_scan_addons_toggled(pressed: bool) -> void:
 	scan_addons = pressed
 	config.scan_addons = pressed
 	save_setting("code_quality/scanning/scan_addons", pressed)
-
-
-# ========== Analysis Limits Handlers ==========
-
-func _on_max_lines_soft_changed(value: float) -> void:
-	config.line_limit_soft = int(value)
-	save_setting("code_quality/limits/file_lines_warn", int(value))
-
-
-func _on_max_lines_hard_changed(value: float) -> void:
-	config.line_limit_hard = int(value)
-	save_setting("code_quality/limits/file_lines_critical", int(value))
-
-
-func _on_max_func_lines_changed(value: float) -> void:
-	config.function_line_limit = int(value)
-	save_setting("code_quality/limits/function_lines", int(value))
-
-
-func _on_max_complexity_changed(value: float) -> void:
-	config.cyclomatic_warning = int(value)
-	save_setting("code_quality/limits/complexity_warn", int(value))
-
-
-func _on_func_lines_crit_changed(value: float) -> void:
-	config.function_line_critical = int(value)
-	save_setting("code_quality/limits/function_lines_crit", int(value))
-
-
-func _on_max_complexity_crit_changed(value: float) -> void:
-	config.cyclomatic_critical = int(value)
-	save_setting("code_quality/limits/complexity_crit", int(value))
-
-
-func _on_max_params_changed(value: float) -> void:
-	config.max_parameters = int(value)
-	save_setting("code_quality/limits/max_params", int(value))
-
-
-func _on_max_nesting_changed(value: float) -> void:
-	config.max_nesting = int(value)
-	save_setting("code_quality/limits/max_nesting", int(value))
-
-
-func _on_god_class_funcs_changed(value: float) -> void:
-	config.god_class_functions = int(value)
-	save_setting("code_quality/limits/god_class_funcs", int(value))
-
-
-func _on_god_class_signals_changed(value: float) -> void:
-	config.god_class_signals = int(value)
-	save_setting("code_quality/limits/god_class_signals", int(value))
-
-
-func _on_reset_all_limits_pressed() -> void:
-	if controls.has("max_lines_soft_spin"):
-		controls.max_lines_soft_spin.value = 200
-	if controls.has("max_lines_hard_spin"):
-		controls.max_lines_hard_spin.value = 300
-	if controls.has("max_func_lines_spin"):
-		controls.max_func_lines_spin.value = 30
-	if controls.has("func_lines_crit_spin"):
-		controls.func_lines_crit_spin.value = 60
-	if controls.has("max_complexity_spin"):
-		controls.max_complexity_spin.value = 10
-	if controls.has("max_complexity_crit_spin"):
-		controls.max_complexity_crit_spin.value = 15
-	if controls.has("max_params_spin"):
-		controls.max_params_spin.value = 4
-	if controls.has("max_nesting_spin"):
-		controls.max_nesting_spin.value = 3
-	if controls.has("god_class_funcs_spin"):
-		controls.god_class_funcs_spin.value = 20
-	if controls.has("god_class_signals_spin"):
-		controls.god_class_signals_spin.value = 10
 
 
 # ========== Claude Code Handlers ==========
