@@ -35,7 +35,7 @@ func _add_section_header(parent: VBoxContainer, title: String, description: Stri
 	hbox.add_child(header)
 
 	var desc := Label.new()
-	desc.text = " - " + description
+	desc.text = " -  " + description
 	desc.add_theme_font_size_override("font_size", 14)
 	desc.add_theme_color_override("font_color", Color(0.55, 0.57, 0.6))
 	hbox.add_child(desc)
