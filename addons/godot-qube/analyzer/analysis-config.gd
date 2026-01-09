@@ -53,7 +53,8 @@ extends Resource
 @export var excluded_paths: Array[String] = [
 	"addons/",
 	".godot/",
-	"tests/mocks/"
+	"tests/mocks/",
+	"screenshots/"
 ]
 
 # Patterns for TODO detection

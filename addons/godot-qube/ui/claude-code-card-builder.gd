@@ -14,16 +14,11 @@ func _init(reset_icon: Texture2D) -> void:
 	_reset_icon = reset_icon
 
 
-# Create Claude Code settings card
-func create_card(controls: Dictionary) -> PanelContainer:
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", QubeSettingsCardBuilder.create_card_style())
+# Create Claude Code settings collapsible card
+func create_card(controls: Dictionary) -> QubeCollapsibleCard:
+	var card := QubeCollapsibleCard.new("Claude Code Integration", "code_quality/ui/claude_collapsed")
+	var vbox := card.get_content_container()
 
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	card.add_child(vbox)
-
-	_add_header(vbox)
 	_add_enable_checkbox(vbox, controls)
 	_add_description(vbox)
 	_add_command_section(vbox, controls)
@@ -31,14 +26,6 @@ func create_card(controls: Dictionary) -> PanelContainer:
 	_add_instructions_section(vbox, controls)
 
 	return card
-
-
-func _add_header(parent: VBoxContainer) -> void:
-	var header := Label.new()
-	header.text = "Claude Code Integration"
-	header.add_theme_font_size_override("font_size", 15)
-	header.add_theme_color_override("font_color", Color(0.9, 0.92, 0.95))
-	parent.add_child(header)
 
 
 func _add_enable_checkbox(parent: VBoxContainer, controls: Dictionary) -> void:

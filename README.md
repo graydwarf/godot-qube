@@ -123,55 +123,9 @@ godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --h
 4. Use filters to focus on specific severity levels or issue types
 5. Click the settings icon to adjust thresholds
 
-### Inline Ignore Comments
+### Ignore Comments
 
-Suppress specific warnings with inline comments:
-
-```gdscript
-# Ignore the next line
-# qube:ignore-next-line
-var magic = 42
-
-# Ignore on same line
-var another_magic = 100  # qube:ignore
-
-# Ignore specific check
-var debug_print = true  # qube:ignore:magic-number
-```
-
-### Function and Block Ignores
-
-Ignore all issues within an entire function:
-
-```gdscript
-# qube:ignore-function - CLI output requires print statements
-func _print_help() -> void:
-    print("Usage: ...")
-    print("Options:")
-    print("  --help  Show this message")
-
-# Ignore only specific check in function
-# qube:ignore-function:print-statement
-func _output_results() -> void:
-    print("Results:")
-    print(data)
-```
-
-Ignore a block of code:
-
-```gdscript
-# qube:ignore-block-start
-var magic1 = 42
-var magic2 = 100
-var magic3 = 256
-# qube:ignore-block-end
-
-# Ignore specific check in block
-# qube:ignore-block-start:magic-number
-var threshold = 1000
-var limit = 5000
-# qube:ignore-block-end
-```
+Suppress warnings for intentional code patterns using inline comments. See **[IGNORE_RULES.md](addons/godot-qube/IGNORE_RULES.md)** for full syntax reference.
 
 ### Project Configuration
 

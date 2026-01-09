@@ -19,11 +19,13 @@ const DEFAULT_GOD_CLASS_SIGNALS := 10
 
 var _reset_icon: Texture2D
 var _claude_card_builder: QubeClaudeCodeCardBuilder
+var _help_card_builder: QubeHelpCardBuilder
 
 
 func _init(reset_icon: Texture2D) -> void:
 	_reset_icon = reset_icon
 	_claude_card_builder = QubeClaudeCodeCardBuilder.new(reset_icon)
+	_help_card_builder = QubeHelpCardBuilder.new()
 
 
 # Creates the standard card style used by all settings cards
@@ -57,31 +59,23 @@ func build_settings_panel(settings_panel: PanelContainer, controls: Dictionary) 
 	cards_vbox.add_theme_constant_override("separation", 10)
 	margin.add_child(cards_vbox)
 
-	# Create all cards
+	# Header bar (non-collapsible)
+	cards_vbox.add_child(create_header_bar())
+
+	# Collapsible cards (all collapsed by default)
 	cards_vbox.add_child(create_display_options_card(controls))
 	cards_vbox.add_child(create_limits_card(controls))
 	cards_vbox.add_child(_claude_card_builder.create_card(controls))
-	cards_vbox.add_child(create_about_card())
+	cards_vbox.add_child(_create_help_card())
 
 	settings_panel.add_child(scroll)
 	settings_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
 
 
-# Create Display Options card with checkboxes
-func create_display_options_card(controls: Dictionary) -> PanelContainer:
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", create_card_style())
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	card.add_child(vbox)
-
-	# Header
-	var header := Label.new()
-	header.text = "Display Options"
-	header.add_theme_font_size_override("font_size", 15)
-	header.add_theme_color_override("font_color", Color(0.9, 0.92, 0.95))
-	vbox.add_child(header)
+# Create Display Options collapsible card with checkboxes
+func create_display_options_card(controls: Dictionary) -> QubeCollapsibleCard:
+	var card := QubeCollapsibleCard.new("Display Options", "code_quality/ui/display_options_collapsed")
+	var vbox := card.get_content_container()
 
 	# First row of checkboxes
 	var hbox := HBoxContainer.new()
@@ -107,33 +101,23 @@ func create_display_options_card(controls: Dictionary) -> PanelContainer:
 	return card
 
 
-# Create Analysis Limits card with spinboxes
-func create_limits_card(controls: Dictionary) -> PanelContainer:
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", create_card_style())
+# Create Analysis Limits collapsible card with spinboxes
+func create_limits_card(controls: Dictionary) -> QubeCollapsibleCard:
+	var card := QubeCollapsibleCard.new("Analysis Limits", "code_quality/ui/limits_collapsed")
+	var vbox := card.get_content_container()
 
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	card.add_child(vbox)
-
-	# Header row with Reset All button
-	var header_row := HBoxContainer.new()
-	header_row.add_theme_constant_override("separation", 8)
-	vbox.add_child(header_row)
-
-	var header := Label.new()
-	header.text = "Analysis Limits"
-	header.add_theme_font_size_override("font_size", 15)
-	header.add_theme_color_override("font_color", Color(0.9, 0.92, 0.95))
-	header_row.add_child(header)
+	# Reset All button row
+	var reset_row := HBoxContainer.new()
+	reset_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(reset_row)
 
 	var reset_all_btn := Button.new()
 	reset_all_btn.icon = _reset_icon
+	reset_all_btn.text = "Reset All"
 	reset_all_btn.tooltip_text = "Reset all limits to defaults"
 	reset_all_btn.flat = true
-	reset_all_btn.custom_minimum_size = Vector2(16, 16)
 	controls.reset_all_limits_btn = reset_all_btn
-	header_row.add_child(reset_all_btn)
+	reset_row.add_child(reset_all_btn)
 
 	# Grid for spinboxes (6 columns: label, spin, reset, label, spin, reset)
 	var grid := GridContainer.new()
@@ -165,47 +149,31 @@ func create_limits_card(controls: Dictionary) -> PanelContainer:
 	return card
 
 
-# Create About section card
-func create_about_card() -> PanelContainer:
-	var card := PanelContainer.new()
-	card.add_theme_stylebox_override("panel", create_card_style())
+# Create header bar with title and links (non-collapsible)
+func create_header_bar() -> HBoxContainer:
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 0)
 
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	card.add_child(vbox)
-
-	# Header
-	var header := Label.new()
-	header.text = "About"
-	header.add_theme_font_size_override("font_size", 15)
-	header.add_theme_color_override("font_color", Color(0.9, 0.92, 0.95))
-	vbox.add_child(header)
-
-	# Plugin title
+	# Title: "Godot Qube" in accent color
 	var title := Label.new()
 	title.text = "Godot Qube"
-	title.add_theme_font_size_override("font_size", 18)
+	title.add_theme_font_size_override("font_size", 17)
 	title.add_theme_color_override("font_color", Color(0.4, 0.75, 1.0))
-	vbox.add_child(title)
+	hbox.add_child(title)
 
-	# Subtitle
+	# Subtitle: " - Code Quality Analyzer for GDScript" in muted color
 	var subtitle := Label.new()
-	subtitle.text = "Code Quality Analyzer for GDScript"
+	subtitle.text = " - Code Quality Analyzer for GDScript"
+	subtitle.add_theme_font_size_override("font_size", 17)
 	subtitle.add_theme_color_override("font_color", Color(0.6, 0.65, 0.7))
-	vbox.add_child(subtitle)
+	hbox.add_child(subtitle)
 
-	# License
-	var license_lbl := Label.new()
-	license_lbl.text = "MIT License - Copyright (c) 2025 Poplava"
-	license_lbl.add_theme_font_size_override("font_size", 11)
-	license_lbl.add_theme_color_override("font_color", Color(0.5, 0.52, 0.55))
-	vbox.add_child(license_lbl)
+	# Spacer to push links to the right
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hbox.add_child(spacer)
 
-	# Links row
-	var links := HBoxContainer.new()
-	links.add_theme_constant_override("separation", 15)
-	vbox.add_child(links)
-
+	# Links
 	var link_data := [
 		["Discord", "https://discord.gg/9GnrTKXGfq"],
 		["GitHub", "https://github.com/graydwarf/godot-qube"],
@@ -220,9 +188,9 @@ func create_about_card() -> PanelContainer:
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 		var url: String = data[1]
 		btn.pressed.connect(func(): OS.shell_open(url))
-		links.add_child(btn)
+		hbox.add_child(btn)
 
-	return card
+	return hbox
 
 
 # Helper to create a checkbox and add it to a container
@@ -258,3 +226,10 @@ func _add_spin_row(grid: GridContainer, label_text: String, min_val: int, max_va
 	grid.add_child(reset_btn)
 
 	return spin
+
+
+# Create Help collapsible card
+func _create_help_card() -> QubeCollapsibleCard:
+	var card := QubeCollapsibleCard.new("Help", "code_quality/ui/help_collapsed")
+	_help_card_builder.create_card_content(card.get_content_container())
+	return card

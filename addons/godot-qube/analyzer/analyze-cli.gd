@@ -107,7 +107,7 @@ func _run_analysis() -> void:
 func _output_json(result) -> void:
 	print(JSON.stringify(result.to_dict(), "\t"))
 
-# qube:ignore-function:print-statement - CLI clickable output
+# qube:ignore-function:print-statement,long-function - CLI clickable output
 func _output_clickable(result) -> void:
 	# Format that Godot Output panel makes clickable
 	print("")
