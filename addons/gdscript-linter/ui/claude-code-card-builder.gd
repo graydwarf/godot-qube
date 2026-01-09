@@ -1,4 +1,4 @@
-# Godot Qube - Claude Code Card UI Builder
+# GDScript Linter - Claude Code Card UI Builder
 # https://poplava.itch.io
 @tool
 extends RefCounted
@@ -6,7 +6,7 @@ class_name QubeClaudeCodeCardBuilder
 ## Creates the Claude Code integration settings card
 
 const DEFAULT_COMMAND := "claude --permission-mode plan"
-const DEFAULT_INSTRUCTIONS := "When analyzing issues, recommend the best solution - which may be a qube:ignore directive instead of refactoring. If code is clean and readable but slightly over a limit, suggest adding an ignore comment rather than restructuring working code. Always explain why you're recommending a refactor vs an ignore directive. IMPORTANT: Before adding any ignore directive, read addons/godot-qube/IGNORE_RULES.md for correct syntax and available directive types."
+const DEFAULT_INSTRUCTIONS := "When analyzing issues, recommend the best solution - which may be a qube:ignore directive instead of refactoring. If code is clean and readable but slightly over a limit, suggest adding an ignore comment rather than restructuring working code. Always explain why you're recommending a refactor vs an ignore directive. IMPORTANT: Before adding any ignore directive, read addons/gdscript-linter/IGNORE_RULES.md for correct syntax and available directive types."
 
 var _reset_icon: Texture2D
 

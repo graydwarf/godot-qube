@@ -1,4 +1,4 @@
-# Godot Qube - Help Card UI Builder
+# GDScript Linter - Help Card UI Builder
 # https://poplava.itch.io
 @tool
 extends RefCounted
@@ -160,19 +160,19 @@ func _add_cli_section(parent: VBoxContainer) -> void:
 	# Examples
 	_add_thin_separator(parent)
 	_add_cli_example(parent, "Basic scan",
-		"godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd")
+		"godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd")
 
 	_add_thin_separator(parent)
 	_add_cli_example(parent, "JSON output",
-		"godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --json")
+		"godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd -- --json")
 
 	_add_thin_separator(parent)
 	_add_cli_example(parent, "HTML report",
-		"godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --html -o report.html")
+		"godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd -- --html -o report.html")
 
 	_add_thin_separator(parent)
 	_add_cli_example(parent, "Scan external project",
-		"godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --path \"C:/my/project\"")
+		"godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd -- --path \"C:/my/project\"")
 
 
 func _add_cli_table(parent: VBoxContainer, title: String, entries: Array) -> void:

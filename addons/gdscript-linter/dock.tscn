@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://dg5q7r8nxkp2c"]
 
-[ext_resource type="Script" uid="uid://bte5tgtc4tbfx" path="res://addons/godot-qube/dock.gd" id="1_dock"]
-[ext_resource type="Texture2D" uid="uid://dhb7gprc0gupq" path="res://addons/godot-qube/icons/settings.svg" id="2_settings"]
+[ext_resource type="Script" uid="uid://bte5tgtc4tbfx" path="res://addons/gdscript-linter/dock.gd" id="1_dock"]
+[ext_resource type="Texture2D" uid="uid://dhb7gprc0gupq" path="res://addons/gdscript-linter/icons/settings.svg" id="2_settings"]
 
 [node name="CodeQualityDock" type="Control"]
 custom_minimum_size = Vector2(400, 200)

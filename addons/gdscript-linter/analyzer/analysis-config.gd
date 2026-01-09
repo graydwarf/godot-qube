@@ -1,4 +1,4 @@
-# Godot Qube - Code quality analyzer for GDScript
+# GDScript Linter - Static code quality analyzer
 # https://poplava.itch.io
 class_name QubeConfig
 extends Resource
@@ -78,7 +78,7 @@ var commented_code_patterns: Array[String] = [
 ]
 
 static func get_default():
-	var config = load("res://addons/godot-qube/analyzer/analysis-config.gd").new()
+	var config = load("res://addons/gdscript-linter/analyzer/analysis-config.gd").new()
 	config.load_project_config()
 	return config
 

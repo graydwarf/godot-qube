@@ -1,4 +1,4 @@
-# Godot Qube - Naming convention checker
+# GDScript Linter - Naming convention checker
 # https://poplava.itch.io
 class_name QubeNamingChecker
 extends RefCounted

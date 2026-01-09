@@ -1,4 +1,4 @@
-# Godot Qube - Code quality analyzer for GDScript
+# GDScript Linter - Static code quality analyzer
 # https://poplava.itch.io
 @tool
 extends EditorPlugin
@@ -8,7 +8,7 @@ var dock: Control
 
 
 func _enter_tree() -> void:
-	dock = preload("res://addons/godot-qube/dock.tscn").instantiate()
+	dock = preload("res://addons/gdscript-linter/dock.tscn").instantiate()
 	add_control_to_bottom_panel(dock, "Code Quality")
 
 

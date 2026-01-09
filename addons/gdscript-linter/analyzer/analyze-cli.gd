@@ -1,20 +1,20 @@
-# Godot Qube - Code quality analyzer for GDScript
+# GDScript Linter - Code quality analyzer for GDScript
 # https://poplava.itch.io
 @tool
 extends SceneTree
 ## CLI runner for code analysis
-## Usage: godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd
+## Usage: godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd
 ## Options:
 ##   -- --path "C:/path/to/project"   Analyze external project
 ##   -- --format json                  Output as JSON (default: console)
 ##   -- --clickable                    Use Godot Output panel clickable format
 
-const AnalysisConfigClass = preload("res://addons/godot-qube/analyzer/analysis-config.gd")
-const CodeAnalyzerClass = preload("res://addons/godot-qube/analyzer/code-analyzer.gd")
-const AnalysisResultClass = preload("res://addons/godot-qube/analyzer/analysis-result.gd")
-const FileResultClass = preload("res://addons/godot-qube/analyzer/file-result.gd")
-const IssueClass = preload("res://addons/godot-qube/analyzer/issue.gd")
-const HtmlReportGenerator = preload("res://addons/godot-qube/analyzer/html-report-generator.gd")
+const AnalysisConfigClass = preload("res://addons/gdscript-linter/analyzer/analysis-config.gd")
+const CodeAnalyzerClass = preload("res://addons/gdscript-linter/analyzer/code-analyzer.gd")
+const AnalysisResultClass = preload("res://addons/gdscript-linter/analyzer/analysis-result.gd")
+const FileResultClass = preload("res://addons/gdscript-linter/analyzer/file-result.gd")
+const IssueClass = preload("res://addons/gdscript-linter/analyzer/issue.gd")
+const HtmlReportGenerator = preload("res://addons/gdscript-linter/analyzer/html-report-generator.gd")
 
 var _target_path: String = "res://"
 var _output_format: String = "console"  # "console", "json", "clickable", "html"
@@ -68,10 +68,10 @@ func _parse_arguments() -> void:
 # qube:ignore-function:print-statement - CLI help output
 func _print_help() -> void:
 	print("")
-	print("Godot Qube - Code Quality Analyzer for GDScript")
+	print("GDScript Linter - Code Quality Analyzer for GDScript")
 	print("")
 	print("Usage:")
-	print("  godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd [options]")
+	print("  godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd [options]")
 	print("")
 	print("Options:")
 	print("  --path <dir>      Analyze project at specified path (default: res://)")

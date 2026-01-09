@@ -1,4 +1,4 @@
-# Godot Qube - Ignore Rules
+# GDScript Linter - Ignore Rules
 
 Suppress specific warnings when code is intentionally written a certain way.
 

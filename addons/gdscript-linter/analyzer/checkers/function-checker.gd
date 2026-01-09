@@ -1,4 +1,4 @@
-# Godot Qube - Function analysis checker
+# GDScript Linter - Function analysis checker
 # https://poplava.itch.io
 class_name QubeFunctionChecker
 extends RefCounted

@@ -1,14 +1,14 @@
-# Godot Qube
+# GDScript Linter - Static Code Quality Analyzer
 
 ![Version](https://img.shields.io/badge/version-1.3.0-blue.svg)
 ![Godot](https://img.shields.io/badge/Godot-4.0%2B-blue.svg)
 
-A static code analysis plugin for GDScript that helps you maintain code quality, identify technical debt, and enforce best practices in your Godot 4.x projects.
+Static code analyzer for GDScript that identifies code quality issues, technical debt, and best practice violations. Features clickable navigation to issues, configurable thresholds, and CI/CD support via CLI.
 
 Runs in seconds with no external dependencies. Can help reduce token usage on large projects.
 
 <p align="center">
-  <img src="screenshots/godot-qube.png" width="700" alt="Godot Qube Editor Dock">
+  <img src="screenshots/gdscript-linter.png" width="700" alt="GDScript Linter Editor Dock">
 </p>
 
 ## Features
@@ -53,7 +53,7 @@ Runs in seconds with no external dependencies. Can help reduce token usage on la
 - Opens automatically in your default browser
 
 <p align="center">
-  <img src="screenshots/godot-qube-html.png" width="700" alt="Godot Qube HTML Report">
+  <img src="screenshots/gdscript-linter-html.png" width="700" alt="GDScript Linter HTML Report">
 </p>
 
 ### Claude Code Integration
@@ -81,18 +81,18 @@ Run analysis from command line for CI/CD integration:
 
 ```bash
 # Analyze current project
-godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd
+godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd
 
 # Analyze external project
-godot --headless --path /path/to/godot-qube --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --path "C:/my/project"
+godot --headless --path /path/to/gdscript-linter --script res://addons/gdscript-linter/analyzer/analyze-cli.gd -- --path "C:/my/project"
 
 # Output formats
-godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --clickable  # Godot Output panel format
-godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --json       # JSON format
-godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --html -o report.html  # HTML report
+godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd -- --clickable  # Godot Output panel format
+godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd -- --json       # JSON format
+godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd -- --html -o report.html  # HTML report
 
 # Audit mode - bypass all ignore directives
-godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --no-ignore
+godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd -- --no-ignore
 ```
 
 **Exit Codes:**
@@ -106,15 +106,15 @@ godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --n
 
 1. Open Godot Editor
 2. Go to AssetLib tab
-3. Search for "Godot Qube"
+3. Search for "GDScript Linter"
 4. Download and install
-5. Enable plugin: Project > Project Settings > Plugins > Godot Qube > Enable
+5. Enable plugin: Project > Project Settings > Plugins > GDScript Linter > Enable
 
 ### Manual Installation
 
 1. Download or clone this repository
-2. Copy the `addons/godot-qube` folder to your project's `addons/` directory
-3. Enable plugin: Project > Project Settings > Plugins > Godot Qube > Enable
+2. Copy the `addons/gdscript-linter` folder to your project's `addons/` directory
+3. Enable plugin: Project > Project Settings > Plugins > GDScript Linter > Enable
 
 ## Usage
 
@@ -158,7 +158,7 @@ func my_complex_function():
 | Actual improved (35 → 32, still > 30) | ℹ️ Info: "consider tightening" |
 | Actual now within limit (35 → 25) | ℹ️ Info: "pinned ignore is now unnecessary" |
 
-See **[IGNORE_RULES.md](addons/godot-qube/IGNORE_RULES.md)** for full syntax reference and examples.
+See **[IGNORE_RULES.md](addons/gdscript-linter/IGNORE_RULES.md)** for full syntax reference and examples.
 
 ### Project Configuration
 
@@ -220,7 +220,7 @@ jobs:
 
       - name: Run Code Analysis
         run: |
-          ./Godot_v4.5-stable_linux.x86_64 --headless --path . --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --clickable
+          ./Godot_v4.5-stable_linux.x86_64 --headless --path . --script res://addons/gdscript-linter/analyzer/analyze-cli.gd -- --clickable
 ```
 
 ## Default Thresholds
@@ -236,7 +236,7 @@ jobs:
 | God class signals | 10 | - |
 
 <p align="center">
-  <img src="screenshots/godot-qube-settings.png" width="500" alt="Godot Qube Settings Panel">
+  <img src="screenshots/gdscript-linter-settings.png" width="500" alt="GDScript Linter Settings Panel">
 </p>
 
 ## Allowed Magic Numbers

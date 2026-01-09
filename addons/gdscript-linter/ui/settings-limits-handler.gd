@@ -1,4 +1,4 @@
-# Godot Qube - Settings Limits Handler
+# GDScript Linter - Settings Limits Handler
 # https://poplava.itch.io
 @tool
 extends RefCounted

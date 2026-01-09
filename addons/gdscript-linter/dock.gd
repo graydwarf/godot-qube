@@ -1,5 +1,5 @@
 # qube:ignore-file:file-length
-# Godot Qube - Code quality analyzer for GDScript
+# GDScript Linter - Static code quality analyzer
 # https://poplava.itch.io
 @tool
 extends Control
@@ -34,11 +34,11 @@ const ISSUE_TYPES := {
 }
 
 # Preload scripts
-var CodeAnalyzerScript = preload("res://addons/godot-qube/analyzer/code-analyzer.gd")
-var AnalysisConfigScript = preload("res://addons/godot-qube/analyzer/analysis-config.gd")
-var IssueScript = preload("res://addons/godot-qube/analyzer/issue.gd")
-var SettingsCardBuilderScript = preload("res://addons/godot-qube/ui/settings-card-builder.gd")
-var SettingsManagerScript = preload("res://addons/godot-qube/ui/settings-manager.gd")
+var CodeAnalyzerScript = preload("res://addons/gdscript-linter/analyzer/code-analyzer.gd")
+var AnalysisConfigScript = preload("res://addons/gdscript-linter/analyzer/analysis-config.gd")
+var IssueScript = preload("res://addons/gdscript-linter/analyzer/issue.gd")
+var SettingsCardBuilderScript = preload("res://addons/gdscript-linter/ui/settings-card-builder.gd")
+var SettingsManagerScript = preload("res://addons/gdscript-linter/ui/settings-manager.gd")
 
 # UI References
 var results_label: RichTextLabel
@@ -109,6 +109,9 @@ func _init_node_references() -> void:
 	results_style.set_content_margin_all(10)
 	results_label.add_theme_stylebox_override("normal", results_style)
 
+	# Style toolbar buttons to match Godot theme
+	_style_toolbar_buttons()
+
 
 func _validate_required_nodes() -> bool:
 	if not results_label or not scan_button or not severity_filter:
@@ -119,15 +122,39 @@ func _validate_required_nodes() -> bool:
 
 func _setup_background() -> void:
 	var bg := ColorRect.new()
-	bg.color = Color(0.12, 0.12, 0.14, 1.0)
+	bg.color = Color(0.176, 0.196, 0.22, 1.0)  # Match Godot scene tree background
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 	move_child(bg, 0)
 
 
+func _style_toolbar_buttons() -> void:
+	# Create button style matching Godot "Other Node" button
+	var btn_style := StyleBoxFlat.new()
+	btn_style.bg_color = Color(0.24, 0.267, 0.314, 1.0)
+	btn_style.set_corner_radius_all(4)
+	btn_style.set_content_margin_all(6)
+
+	var btn_hover := StyleBoxFlat.new()
+	btn_hover.bg_color = Color(0.28, 0.31, 0.36, 1.0)
+	btn_hover.set_corner_radius_all(4)
+	btn_hover.set_content_margin_all(6)
+
+	var btn_pressed := StyleBoxFlat.new()
+	btn_pressed.bg_color = Color(0.2, 0.22, 0.26, 1.0)
+	btn_pressed.set_corner_radius_all(4)
+	btn_pressed.set_content_margin_all(6)
+
+	for btn in [scan_button, html_export_button, export_button]:
+		if btn:
+			btn.add_theme_stylebox_override("normal", btn_style)
+			btn.add_theme_stylebox_override("hover", btn_hover)
+			btn.add_theme_stylebox_override("pressed", btn_pressed)
+
+
 func _init_config_and_settings_panel() -> void:
 	current_config = AnalysisConfigScript.new()
-	var reset_icon = load("res://addons/godot-qube/icons/arrow-reset.svg")
+	var reset_icon = load("res://addons/gdscript-linter/icons/arrow-reset.svg")
 	var card_builder = SettingsCardBuilderScript.new(reset_icon)
 	card_builder.build_settings_panel(settings_panel, settings_controls)
 
@@ -272,10 +299,10 @@ func _on_export_pressed() -> void:
 
 func _on_html_export_pressed() -> void:
 	if not current_result:
-		var AnalysisResultScript = preload("res://addons/godot-qube/analyzer/analysis-result.gd")
+		var AnalysisResultScript = preload("res://addons/gdscript-linter/analyzer/analysis-result.gd")
 		current_result = AnalysisResultScript.new()
 
-	var HtmlReportGenerator = preload("res://addons/godot-qube/analyzer/html-report-generator.gd")
+	var HtmlReportGenerator = preload("res://addons/gdscript-linter/analyzer/html-report-generator.gd")
 	var html := HtmlReportGenerator.generate(current_result)
 	var export_path := "res://code_quality_report.html"
 
@@ -744,7 +771,7 @@ func _format_severity_section(issues: Array, label: String, emoji: String, color
 
 	# Add Claude Code button for severity level if enabled
 	if settings_manager.claude_code_enabled:
-		bbcode += " [url=claude-severity://%s][img=20x20]res://addons/godot-qube/icons/claude.png[/img][/url]" % severity_key
+		bbcode += " [url=claude-severity://%s][img=20x20]res://addons/gdscript-linter/icons/claude.png[/img][/url]" % severity_key
 
 	bbcode += "\n"
 	bbcode += _format_issues_by_type(issues, color, severity_key)
@@ -818,7 +845,7 @@ func _format_issues_by_type(issues: Array, color: String, severity_key: String) 
 		# Add Claude Code button for type level if enabled
 		if settings_manager.claude_code_enabled:
 			var type_key := "%s|%s" % [severity_key, check_id]
-			bbcode += " [url=claude-type://%s][img=16x16]res://addons/godot-qube/icons/claude.png[/img][/url]" % type_key.uri_encode()
+			bbcode += " [url=claude-type://%s][img=16x16]res://addons/gdscript-linter/icons/claude.png[/img][/url]" % type_key.uri_encode()
 
 		bbcode += " [color=#aaaaaa]──[/color]\n"
 
@@ -854,7 +881,7 @@ func _format_issue(issue, color: String) -> String:
 			issue.file_path, issue.line, issue.check_id, severity_str,
 			issue.message.replace("|", "-")
 		]
-		line += " [url=claude://%s][img=20x20]res://addons/godot-qube/icons/claude.png[/img][/url]" % claude_data.uri_encode()
+		line += " [url=claude://%s][img=20x20]res://addons/gdscript-linter/icons/claude.png[/img][/url]" % claude_data.uri_encode()
 
 	return line + "\n"
 

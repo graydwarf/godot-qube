@@ -1,4 +1,4 @@
-# Godot Qube - Settings Card UI Builder
+# GDScript Linter - Settings Card UI Builder
 # https://poplava.itch.io
 @tool
 extends RefCounted
@@ -31,7 +31,7 @@ func _init(reset_icon: Texture2D) -> void:
 # Creates the standard card style used by all settings cards
 static func create_card_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.15, 0.17, 0.22, 0.9)
+	style.bg_color = Color(0.24, 0.267, 0.314, 1.0)  # Match Godot "Other Node" button
 	style.border_color = Color(0.3, 0.35, 0.45, 0.5)
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(6)
@@ -268,9 +268,9 @@ func create_header_bar() -> HBoxContainer:
 	var hbox := HBoxContainer.new()
 	hbox.add_theme_constant_override("separation", 0)
 
-	# Title: "Godot Qube" in accent color
+	# Title: "GDScript Linter" in accent color
 	var title := Label.new()
-	title.text = "Godot Qube"
+	title.text = "GDScript Linter"
 	title.add_theme_font_size_override("font_size", 17)
 	title.add_theme_color_override("font_color", Color(0.4, 0.75, 1.0))
 	hbox.add_child(title)
@@ -290,7 +290,7 @@ func create_header_bar() -> HBoxContainer:
 	# Links
 	var link_data := [
 		["Discord", "https://discord.gg/9GnrTKXGfq"],
-		["GitHub", "https://github.com/graydwarf/godot-qube"],
+		["GitHub", "https://github.com/graydwarf/godot-gdscript-linter"],
 		["More Tools", "https://poplava.itch.io"]
 	]
 	for data in link_data:

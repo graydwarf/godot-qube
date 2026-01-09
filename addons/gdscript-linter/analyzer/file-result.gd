@@ -1,4 +1,4 @@
-# Godot Qube - Code quality analyzer for GDScript
+# GDScript Linter - Static code quality analyzer
 # https://poplava.itch.io
 class_name QubeFileResult
 extends RefCounted
@@ -12,7 +12,7 @@ var signals_found: Array[String] = []
 var dependencies: Array[String] = []
 
 static func create(path: String, lines: int):
-	var result = load("res://addons/godot-qube/analyzer/file-result.gd").new()
+	var result = load("res://addons/gdscript-linter/analyzer/file-result.gd").new()
 	result.file_path = path
 	result.line_count = lines
 	return result

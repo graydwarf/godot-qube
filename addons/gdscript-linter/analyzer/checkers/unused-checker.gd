@@ -1,4 +1,4 @@
-# Godot Qube - Unused variable/parameter checker
+# GDScript Linter - Unused variable/parameter checker
 # https://poplava.itch.io
 class_name QubeUnusedChecker
 extends RefCounted

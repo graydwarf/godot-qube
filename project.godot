@@ -10,11 +10,11 @@ config_version=5
 
 [application]
 
-config/name="Godot Qube"
-config/description="Code quality analyzer plugin for GDScript"
+config/name="GDScript Linter"
+config/description="Static code analyzer for GDScript that identifies code quality issues, technical debt, and best practice violations."
 config/features=PackedStringArray("4.5")
 config/icon="res://icon.svg"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/godot-qube/plugin.cfg")
+enabled=PackedStringArray("res://addons/gdscript-linter/plugin.cfg")

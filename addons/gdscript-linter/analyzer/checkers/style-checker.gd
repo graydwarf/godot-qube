@@ -1,4 +1,4 @@
-# Godot Qube - Style checker (magic numbers, commented code, type hints)
+# GDScript Linter - Style checker (magic numbers, commented code, type hints)
 # https://poplava.itch.io
 class_name QubeStyleChecker
 extends RefCounted

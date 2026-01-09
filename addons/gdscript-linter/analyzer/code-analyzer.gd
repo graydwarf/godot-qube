@@ -1,13 +1,13 @@
-# Godot Qube - Code quality analyzer for GDScript
+# GDScript Linter - Static code quality analyzer
 # https://poplava.itch.io
 class_name QubeAnalyzer
 extends RefCounted
 ## Core analysis engine - reusable by CLI, plugin, or external tools
 
-const AnalysisConfigClass = preload("res://addons/godot-qube/analyzer/analysis-config.gd")
-const AnalysisResultClass = preload("res://addons/godot-qube/analyzer/analysis-result.gd")
-const FileResultClass = preload("res://addons/godot-qube/analyzer/file-result.gd")
-const IssueClass = preload("res://addons/godot-qube/analyzer/issue.gd")
+const AnalysisConfigClass = preload("res://addons/gdscript-linter/analyzer/analysis-config.gd")
+const AnalysisResultClass = preload("res://addons/gdscript-linter/analyzer/analysis-result.gd")
+const FileResultClass = preload("res://addons/gdscript-linter/analyzer/file-result.gd")
+const IssueClass = preload("res://addons/gdscript-linter/analyzer/issue.gd")
 
 var config
 var result

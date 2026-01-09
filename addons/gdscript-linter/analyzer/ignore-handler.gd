@@ -1,5 +1,5 @@
 # qube:ignore-file:file-length=414
-# Godot Qube - Ignore directive handler
+# GDScript Linter - Ignore directive handler
 # See IGNORE_RULES.md for directive syntax and usage
 # https://poplava.itch.io
 class_name QubeIgnoreHandler
