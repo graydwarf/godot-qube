@@ -14,7 +14,7 @@ func _init(p_config, naming_checker: QubeNamingChecker) -> void:
 
 # Analyzes all functions in a file and returns issues array
 # Also populates file_result.functions with function metadata
-func analyze_functions(lines: Array, file_result, add_issue_callback: Callable) -> void:
+func analyze_functions(lines: Array, file_result, add_issue_callback: Callable, add_pinned_issue_callback: Callable = Callable()) -> void:
 	var current_func: Dictionary = {}
 	var in_function := false
 	var func_body_lines: Array[String] = []
@@ -26,7 +26,7 @@ func analyze_functions(lines: Array, file_result, add_issue_callback: Callable) 
 		if trimmed.begins_with("func "):
 			# Finalize previous function
 			if in_function and current_func:
-				_finalize_function(current_func, func_body_lines, file_result, add_issue_callback)
+				_finalize_function(current_func, func_body_lines, file_result, add_issue_callback, add_pinned_issue_callback)
 
 			# Start new function
 			in_function = true
@@ -38,7 +38,7 @@ func analyze_functions(lines: Array, file_result, add_issue_callback: Callable) 
 
 	# Finalize last function
 	if in_function and current_func:
-		_finalize_function(current_func, func_body_lines, file_result, add_issue_callback)
+		_finalize_function(current_func, func_body_lines, file_result, add_issue_callback, add_pinned_issue_callback)
 
 
 func _parse_function_signature(line: String, line_num: int) -> Dictionary:
@@ -66,7 +66,7 @@ func _parse_function_signature(line: String, line_num: int) -> Dictionary:
 	return func_data
 
 
-func _finalize_function(func_data: Dictionary, body_lines: Array, file_result, add_issue_callback: Callable) -> void:
+func _finalize_function(func_data: Dictionary, body_lines: Array, file_result, add_issue_callback: Callable, add_pinned_issue_callback: Callable) -> void:
 	var line_count := body_lines.size() + 1  # +1 for signature
 	var max_nesting := _calculate_max_nesting(body_lines)
 	var is_empty := _is_empty_function(body_lines)
@@ -78,40 +78,47 @@ func _finalize_function(func_data: Dictionary, body_lines: Array, file_result, a
 	func_data["complexity"] = complexity
 	file_result.add_function(func_data)
 
-	_check_function_length(func_data, line_count, add_issue_callback)
-	_check_parameter_count(func_data, add_issue_callback)
-	_check_nesting_depth(func_data, max_nesting, add_issue_callback)
+	_check_function_length(func_data, line_count, add_pinned_issue_callback)
+	_check_parameter_count(func_data, add_pinned_issue_callback)
+	_check_nesting_depth(func_data, max_nesting, add_pinned_issue_callback)
 	_check_empty_function(func_data, is_empty, add_issue_callback)
-	_check_complexity(func_data, complexity, add_issue_callback)
+	_check_complexity(func_data, complexity, add_pinned_issue_callback)
 	_check_return_type(func_data, add_issue_callback)
 	_check_naming(func_data, add_issue_callback)
 
 
-func _check_function_length(func_data: Dictionary, line_count: int, add_issue_callback: Callable) -> void:
+func _check_function_length(func_data: Dictionary, line_count: int, add_pinned_callback: Callable) -> void:
 	if not config.check_function_length:
 		return
 	var func_line: int = func_data.line
 	var func_name: String = func_data.name
+	var context := "Function '%s'" % func_name
 	if line_count > config.function_line_critical:
-		add_issue_callback.call(func_line, "critical", "long-function",
-			"Function '%s' exceeds %d lines (%d)" % [func_name, config.function_line_critical, line_count])
+		add_pinned_callback.call(func_line, "critical", "long-function",
+			"Function '%s' exceeds %d lines (%d)" % [func_name, config.function_line_critical, line_count],
+			line_count, config.function_line_critical, context)
 	elif line_count > config.function_line_limit:
-		add_issue_callback.call(func_line, "warning", "long-function",
-			"Function '%s' exceeds %d lines (%d)" % [func_name, config.function_line_limit, line_count])
+		add_pinned_callback.call(func_line, "warning", "long-function",
+			"Function '%s' exceeds %d lines (%d)" % [func_name, config.function_line_limit, line_count],
+			line_count, config.function_line_limit, context)
 
 
-func _check_parameter_count(func_data: Dictionary, add_issue_callback: Callable) -> void:
+func _check_parameter_count(func_data: Dictionary, add_pinned_callback: Callable) -> void:
 	if not config.check_parameters or func_data.params <= config.max_parameters:
 		return
-	add_issue_callback.call(func_data.line, "warning", "too-many-params",
-		"Function '%s' has %d parameters (max %d)" % [func_data.name, func_data.params, config.max_parameters])
+	var context := "Function '%s'" % func_data.name
+	add_pinned_callback.call(func_data.line, "warning", "too-many-params",
+		"Function '%s' has %d parameters (max %d)" % [func_data.name, func_data.params, config.max_parameters],
+		func_data.params, config.max_parameters, context)
 
 
-func _check_nesting_depth(func_data: Dictionary, max_nesting: int, add_issue_callback: Callable) -> void:
+func _check_nesting_depth(func_data: Dictionary, max_nesting: int, add_pinned_callback: Callable) -> void:
 	if not config.check_nesting or max_nesting <= config.max_nesting:
 		return
-	add_issue_callback.call(func_data.line, "warning", "deep-nesting",
-		"Function '%s' has %d nesting levels (max %d)" % [func_data.name, max_nesting, config.max_nesting])
+	var context := "Function '%s'" % func_data.name
+	add_pinned_callback.call(func_data.line, "warning", "deep-nesting",
+		"Function '%s' has %d nesting levels (max %d)" % [func_data.name, max_nesting, config.max_nesting],
+		max_nesting, config.max_nesting, context)
 
 
 func _check_empty_function(func_data: Dictionary, is_empty: bool, add_issue_callback: Callable) -> void:
@@ -121,17 +128,20 @@ func _check_empty_function(func_data: Dictionary, is_empty: bool, add_issue_call
 		"Function '%s' is empty or contains only 'pass'" % func_data.name)
 
 
-func _check_complexity(func_data: Dictionary, complexity: int, add_issue_callback: Callable) -> void:
+func _check_complexity(func_data: Dictionary, complexity: int, add_pinned_callback: Callable) -> void:
 	if not config.check_cyclomatic_complexity:
 		return
 	var func_line: int = func_data.line
 	var func_name: String = func_data.name
+	var context := "Function '%s'" % func_name
 	if complexity > config.cyclomatic_critical:
-		add_issue_callback.call(func_line, "critical", "high-complexity",
-			"Function '%s' has complexity %d (max %d)" % [func_name, complexity, config.cyclomatic_critical])
+		add_pinned_callback.call(func_line, "critical", "high-complexity",
+			"Function '%s' has complexity %d (max %d)" % [func_name, complexity, config.cyclomatic_critical],
+			complexity, config.cyclomatic_critical, context)
 	elif complexity > config.cyclomatic_warning:
-		add_issue_callback.call(func_line, "warning", "high-complexity",
-			"Function '%s' has complexity %d (warning at %d)" % [func_name, complexity, config.cyclomatic_warning])
+		add_pinned_callback.call(func_line, "warning", "high-complexity",
+			"Function '%s' has complexity %d (warning at %d)" % [func_name, complexity, config.cyclomatic_warning],
+			complexity, config.cyclomatic_warning, context)
 
 
 func _check_return_type(func_data: Dictionary, add_issue_callback: Callable) -> void:

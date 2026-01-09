@@ -54,7 +54,7 @@ func analyze_content(content: String, file_path: String):
 	var file_result = FileResultClass.create(file_path, lines.size())
 
 	_analyze_file_level(lines, file_path, file_result)
-	_function_checker.analyze_functions(lines, file_result, _create_add_issue_callback(file_path))
+	_function_checker.analyze_functions(lines, file_result, _create_add_issue_callback(file_path), _create_pinned_issue_callback(file_path))
 	_check_god_class(file_path, file_result)
 	_unused_checker.check_unused(lines, _create_add_issue_callback(file_path))
 	_calculate_debt_score(file_result)
@@ -68,6 +68,11 @@ func _create_add_issue_callback(file_path: String) -> Callable:
 		_add_issue_from_checker(file_path, line_num, severity, check_id, message)
 
 
+func _create_pinned_issue_callback(file_path: String) -> Callable:
+	return func(line_num: int, severity: String, check_id: String, message: String, actual_value: int, limit: int, context: String) -> void:
+		_add_pinned_issue_from_checker(file_path, line_num, severity, check_id, message, actual_value, limit, context)
+
+
 func _add_issue_from_checker(file_path: String, line_num: int, severity: String, check_id: String, message: String) -> void:
 	var sev = _severity_from_string(severity)
 	var issue = IssueClass.create(file_path, line_num, sev, check_id, message)
@@ -75,6 +80,37 @@ func _add_issue_from_checker(file_path: String, line_num: int, severity: String,
 		result.add_ignored_issue(issue)
 		return
 	result.add_issue(issue)
+
+
+func _add_pinned_issue_from_checker(file_path: String, line_num: int, severity: String, check_id: String, message: String, actual_value: int, limit: int, context: String) -> void:
+	var pin_result := _ignore_handler.check_with_pin(line_num, check_id, actual_value, limit)
+
+	match pin_result.action:
+		"ignore":
+			# Pinned value matches or no pin - add to ignored
+			var sev = _severity_from_string(severity)
+			var issue = IssueClass.create(file_path, line_num, sev, check_id, message)
+			result.add_ignored_issue(issue)
+		"exceeded":
+			# Value exceeded pinned amount - report as warning
+			var exceeded_msg := "%s exceeded pinned limit (%d → %d, limit is %d)" % [context, pin_result.pinned, actual_value, limit]
+			var issue = IssueClass.create(file_path, line_num, IssueClass.Severity.WARNING, check_id + "-exceeded", exceeded_msg)
+			result.add_issue(issue)
+		"improved":
+			# Value improved but still over limit - report as info
+			var improved_msg := "%s now %d (was pinned at %d, limit is %d) - consider tightening" % [context, actual_value, pin_result.pinned, limit]
+			var issue = IssueClass.create(file_path, line_num, IssueClass.Severity.INFO, check_id + "-improved", improved_msg)
+			result.add_issue(issue)
+		"unnecessary":
+			# Value is now within limit - ignore is unnecessary
+			var unnecessary_msg := "Pinned ignore for %s is now unnecessary (%s is %d, limit is %d)" % [check_id, context, actual_value, limit]
+			var issue = IssueClass.create(file_path, line_num, IssueClass.Severity.INFO, check_id + "-unnecessary", unnecessary_msg)
+			result.add_issue(issue)
+		"normal":
+			# No ignore directive - process normally
+			var sev = _severity_from_string(severity)
+			var issue = IssueClass.create(file_path, line_num, sev, check_id, message)
+			result.add_issue(issue)
 
 
 func _severity_from_string(severity: String) -> int:
@@ -151,12 +187,15 @@ func _analyze_file_level(lines: Array, file_path: String, file_result) -> void:
 
 
 func _check_file_length(file_path: String, line_count: int) -> void:
+	var context := "File"
 	if line_count > config.line_limit_hard:
-		_add_issue(file_path, 1, IssueClass.Severity.CRITICAL, "file-length",
-			"File exceeds %d lines (%d)" % [config.line_limit_hard, line_count])
+		_add_pinned_issue_from_checker(file_path, 1, "critical", "file-length",
+			"File exceeds %d lines (%d)" % [config.line_limit_hard, line_count],
+			line_count, config.line_limit_hard, context)
 	elif line_count > config.line_limit_soft:
-		_add_issue(file_path, 1, IssueClass.Severity.WARNING, "file-length",
-			"File exceeds %d lines (%d)" % [config.line_limit_soft, line_count])
+		_add_pinned_issue_from_checker(file_path, 1, "warning", "file-length",
+			"File exceeds %d lines (%d)" % [config.line_limit_soft, line_count],
+			line_count, config.line_limit_soft, context)
 
 
 func _check_god_class(file_path: String, file_result) -> void:
@@ -171,20 +210,17 @@ func _check_god_class(file_path: String, file_result) -> void:
 		if not func_name.begins_with("_"):
 			public_funcs += 1
 
-	var is_god_class := false
-	var reasons: Array[String] = []
-
+	# Check public functions limit
 	if public_funcs > config.god_class_functions:
-		is_god_class = true
-		reasons.append("%d public functions (max %d)" % [public_funcs, config.god_class_functions])
+		_add_pinned_issue_from_checker(file_path, 1, "warning", "god-class-functions",
+			"God class: %d public functions (max %d)" % [public_funcs, config.god_class_functions],
+			public_funcs, config.god_class_functions, "Public functions")
 
+	# Check signals limit
 	if signal_count > config.god_class_signals:
-		is_god_class = true
-		reasons.append("%d signals (max %d)" % [signal_count, config.god_class_signals])
-
-	if is_god_class:
-		_add_issue(file_path, 1, IssueClass.Severity.WARNING, "god-class",
-			"God class detected: %s" % ", ".join(reasons))
+		_add_pinned_issue_from_checker(file_path, 1, "warning", "god-class-signals",
+			"God class: %d signals (max %d)" % [signal_count, config.god_class_signals],
+			signal_count, config.god_class_signals, "Signals")
 
 
 func _calculate_debt_score(file_result) -> void:

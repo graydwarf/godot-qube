@@ -149,6 +149,7 @@ func _output_console(result) -> void:
 	_print_top_files_by_debt(result)
 	_print_critical_issues(result)
 	_print_long_functions(result)
+	_print_pinned_exception_issues(result)
 	_print_todo_comments(result)
 	_print_console_footer()
 
@@ -215,6 +216,18 @@ func _print_long_functions(result) -> void:
 		var issue = long_func_issues[i]
 		print("  %s" % issue.get_clickable_format())
 	print("")
+
+# qube:ignore-function:print-statement - CLI console output
+func _print_pinned_exception_issues(result) -> void:
+	var pinned_issues: Array = result.issues.filter(func(i): return i.check_id.ends_with("-exceeded") or i.check_id.ends_with("-improved") or i.check_id.ends_with("-unnecessary"))
+	if pinned_issues.size() == 0:
+		return
+	print("PINNED EXCEPTION ALERTS")
+	print("-" .repeat(40))
+	for issue in pinned_issues:
+		print("  %s" % issue.get_clickable_format())
+	print("")
+
 
 # qube:ignore-function:print-statement - CLI console output
 func _print_todo_comments(result) -> void:
