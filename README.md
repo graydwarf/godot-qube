@@ -127,14 +127,14 @@ godot --headless --script res://addons/godot-qube/analyzer/analyze-cli.gd -- --h
 
 Suppress warnings for intentional code patterns using inline comments:
 
-| Directive | Scope |
-|-----------|-------|
-| `qube:ignore-file` | Entire file |
-| `qube:ignore-below` | Line to EOF |
-| `qube:ignore-function` | Entire function |
-| `qube:ignore-block-start/end` | Code block |
-| `qube:ignore-next-line` | Next line |
-| `qube:ignore` | Same line |
+| Directive                      | Scope           |
+|--------------------------------|-----------------|
+| `qube:ignore-file`             | Entire file     |
+| `qube:ignore-below`            | Line to EOF     |
+| `qube:ignore-function`         | Entire function |
+| `qube:ignore-block-start/end`  | Code block      |
+| `qube:ignore-next-line`        | Next line       |
+| `qube:ignore`                  | Same line       |
 
 All directives support optional check IDs: `# qube:ignore:magic-number,print-statement`
 
