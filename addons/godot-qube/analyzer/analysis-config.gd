@@ -66,6 +66,7 @@ var print_patterns: Array[String] = ["print(", "print_debug(", "prints(", "print
 var print_whitelist: Array[String] = ["DebugLogger"]
 
 # Allowed magic numbers (won't be flagged)
+# qube:ignore-next-line:magic-number
 var allowed_numbers: Array = [0, 1, -1, 2, 0.0, 1.0, 0.5, 2.0, -1.0, 100, 255, 10, 60, 90, 180, 360]
 
 # Patterns that indicate commented-out code (not regular comments)
