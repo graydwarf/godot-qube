@@ -346,12 +346,25 @@ func _setup_claude_tooltip() -> void:
 
 
 func _setup_claude_customize_popup() -> void:
-	# Main popup container
-	_claude_customize_popup = PanelContainer.new()
-	_claude_customize_popup.custom_minimum_size = Vector2(550, 500)
-	_claude_customize_popup.visible = false
-	_claude_customize_popup.z_index = 200
-	_claude_customize_popup.top_level = true  # Render independently of parent clipping
+	_claude_customize_popup = _create_popup_container()
+	var vbox := _create_popup_vbox()
+	_claude_customize_popup.add_child(vbox)
+
+	_add_popup_title(vbox)
+	_add_popup_context_section(vbox)
+	_add_popup_command_section(vbox)
+	_add_popup_instructions_section(vbox)
+	_add_popup_buttons(vbox)
+
+	add_child(_claude_customize_popup)
+
+
+func _create_popup_container() -> PanelContainer:
+	var popup := PanelContainer.new()
+	popup.custom_minimum_size = Vector2(550, 500)
+	popup.visible = false
+	popup.z_index = 200
+	popup.top_level = true
 
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.12, 0.14, 0.18, 0.98)
@@ -359,14 +372,17 @@ func _setup_claude_customize_popup() -> void:
 	style.set_border_width_all(2)
 	style.set_corner_radius_all(8)
 	style.set_content_margin_all(16)
-	_claude_customize_popup.add_theme_stylebox_override("panel", style)
+	popup.add_theme_stylebox_override("panel", style)
+	return popup
 
-	# Main vertical layout
+
+func _create_popup_vbox() -> VBoxContainer:
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 10)
-	_claude_customize_popup.add_child(vbox)
+	return vbox
 
-	# Title
+
+func _add_popup_title(vbox: VBoxContainer) -> void:
 	var title := Label.new()
 	title.text = "Customize Claude Launch"
 	title.add_theme_font_size_override("font_size", 16)
@@ -374,17 +390,21 @@ func _setup_claude_customize_popup() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(title)
 
-	# Separator
 	var sep := HSeparator.new()
 	sep.add_theme_constant_override("separation", 6)
 	vbox.add_child(sep)
 
-	# Issue Context section (read-only, shows what will be sent)
-	var context_label := Label.new()
-	context_label.text = "Issue Context:"
-	context_label.add_theme_font_size_override("font_size", 13)
-	context_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.8))
-	vbox.add_child(context_label)
+
+func _create_section_label(label_text: String) -> Label:
+	var label := Label.new()
+	label.text = label_text
+	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.8))
+	return label
+
+
+func _add_popup_context_section(vbox: VBoxContainer) -> void:
+	vbox.add_child(_create_section_label("Issue Context:"))
 
 	_claude_customize_context = RichTextLabel.new()
 	_claude_customize_context.bbcode_enabled = true
@@ -393,7 +413,7 @@ func _setup_claude_customize_popup() -> void:
 	_claude_customize_context.custom_minimum_size = Vector2(0, 100)
 	_claude_customize_context.add_theme_font_size_override("normal_font_size", 11)
 	_claude_customize_context.add_theme_color_override("default_color", Color(0.7, 0.75, 0.8))
-	# Darker background for context area
+
 	var context_style := StyleBoxFlat.new()
 	context_style.bg_color = Color(0.08, 0.09, 0.11, 1.0)
 	context_style.set_corner_radius_all(4)
@@ -401,24 +421,18 @@ func _setup_claude_customize_popup() -> void:
 	_claude_customize_context.add_theme_stylebox_override("normal", context_style)
 	vbox.add_child(_claude_customize_context)
 
-	# Launch Command section
-	var cmd_label := Label.new()
-	cmd_label.text = "Launch Command:"
-	cmd_label.add_theme_font_size_override("font_size", 13)
-	cmd_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.8))
-	vbox.add_child(cmd_label)
+
+func _add_popup_command_section(vbox: VBoxContainer) -> void:
+	vbox.add_child(_create_section_label("Launch Command:"))
 
 	_claude_customize_command = LineEdit.new()
 	_claude_customize_command.placeholder_text = "claude --permission-mode plan"
 	_claude_customize_command.add_theme_font_size_override("font_size", 12)
 	vbox.add_child(_claude_customize_command)
 
-	# Custom Instructions section
-	var instr_label := Label.new()
-	instr_label.text = "Custom Instructions:"
-	instr_label.add_theme_font_size_override("font_size", 13)
-	instr_label.add_theme_color_override("font_color", Color(0.75, 0.75, 0.8))
-	vbox.add_child(instr_label)
+
+func _add_popup_instructions_section(vbox: VBoxContainer) -> void:
+	vbox.add_child(_create_section_label("Custom Instructions:"))
 
 	_claude_customize_instructions = TextEdit.new()
 	_claude_customize_instructions.placeholder_text = "Additional instructions for Claude..."
@@ -427,27 +441,24 @@ func _setup_claude_customize_popup() -> void:
 	_claude_customize_instructions.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
 	vbox.add_child(_claude_customize_instructions)
 
-	# Button container
+
+func _add_popup_buttons(vbox: VBoxContainer) -> void:
 	var btn_container := HBoxContainer.new()
 	btn_container.alignment = BoxContainer.ALIGNMENT_END
 	btn_container.add_theme_constant_override("separation", 8)
 	vbox.add_child(btn_container)
 
-	# Cancel button
 	var cancel_btn := Button.new()
 	cancel_btn.text = "Cancel"
 	cancel_btn.custom_minimum_size = Vector2(80, 32)
 	cancel_btn.pressed.connect(_on_claude_customize_cancel)
 	btn_container.add_child(cancel_btn)
 
-	# Launch button
 	var launch_btn := Button.new()
 	launch_btn.text = "Launch"
 	launch_btn.custom_minimum_size = Vector2(80, 32)
 	launch_btn.pressed.connect(_on_claude_customize_launch)
 	btn_container.add_child(launch_btn)
-
-	add_child(_claude_customize_popup)
 
 
 func _show_claude_customize_popup() -> void:
