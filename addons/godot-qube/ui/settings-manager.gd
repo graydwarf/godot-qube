@@ -9,6 +9,7 @@ signal setting_changed(key: String, value: Variant)
 signal display_refresh_needed
 
 const CLAUDE_CODE_DEFAULT_COMMAND := "claude --permission-mode plan"
+const CLAUDE_CODE_DEFAULT_INSTRUCTIONS := "When analyzing issues, recommend the best solution - which may be a qube:ignore directive instead of refactoring. If code is clean and readable but slightly over a limit, suggest adding an ignore comment rather than restructuring working code. Always explain why you're recommending a refactor vs an ignore directive."
 
 # Settings state
 var show_total_issues: bool = true
@@ -64,7 +65,7 @@ func load_settings() -> void:
 	# Load Claude Code settings
 	claude_code_enabled = _get_setting(editor_settings, "code_quality/claude/enabled", false)
 	claude_code_command = _get_setting(editor_settings, "code_quality/claude/launch_command", CLAUDE_CODE_DEFAULT_COMMAND)
-	claude_custom_instructions = _get_setting(editor_settings, "code_quality/claude/custom_instructions", "")
+	claude_custom_instructions = _get_setting(editor_settings, "code_quality/claude/custom_instructions", CLAUDE_CODE_DEFAULT_INSTRUCTIONS)
 
 	# Apply to UI controls if they exist
 	_apply_to_ui()
@@ -150,7 +151,9 @@ func connect_controls(export_btn: Button, html_export_btn: Button) -> void:
 	if controls.has("claude_instructions_edit"):
 		controls.claude_instructions_edit.text_changed.connect(_on_claude_instructions_changed)
 	if controls.has("claude_reset_button"):
-		controls.claude_reset_button.pressed.connect(_on_claude_reset_pressed)
+		controls.claude_reset_button.pressed.connect(_on_claude_command_reset_pressed)
+	if controls.has("claude_instructions_reset_button"):
+		controls.claude_instructions_reset_button.pressed.connect(_on_claude_instructions_reset_pressed)
 
 
 # Helper to get setting with default value
@@ -228,8 +231,15 @@ func _on_claude_instructions_changed() -> void:
 		save_setting("code_quality/claude/custom_instructions", claude_custom_instructions)
 
 
-func _on_claude_reset_pressed() -> void:
+func _on_claude_command_reset_pressed() -> void:
 	claude_code_command = CLAUDE_CODE_DEFAULT_COMMAND
 	if controls.has("claude_command_edit"):
 		controls.claude_command_edit.text = CLAUDE_CODE_DEFAULT_COMMAND
 	save_setting("code_quality/claude/launch_command", CLAUDE_CODE_DEFAULT_COMMAND)
+
+
+func _on_claude_instructions_reset_pressed() -> void:
+	claude_custom_instructions = CLAUDE_CODE_DEFAULT_INSTRUCTIONS
+	if controls.has("claude_instructions_edit"):
+		controls.claude_instructions_edit.text = CLAUDE_CODE_DEFAULT_INSTRUCTIONS
+	save_setting("code_quality/claude/custom_instructions", CLAUDE_CODE_DEFAULT_INSTRUCTIONS)
