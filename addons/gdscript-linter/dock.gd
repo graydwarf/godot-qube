@@ -122,26 +122,26 @@ func _validate_required_nodes() -> bool:
 
 func _setup_background() -> void:
 	var bg := ColorRect.new()
-	bg.color = Color(0.145, 0.169, 0.204, 1.0)  # #252B34
+	bg.color = Color(0.212, 0.239, 0.290, 1.0)  # #363D4A
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 	move_child(bg, 0)
 
 
 func _style_toolbar_buttons() -> void:
-	# Create button style - #363D4A
+	# Create button style - #252B34
 	var btn_style := StyleBoxFlat.new()
-	btn_style.bg_color = Color(0.212, 0.239, 0.290, 1.0)  # #363D4A
+	btn_style.bg_color = Color(0.145, 0.169, 0.204, 1.0)  # #252B34
 	btn_style.set_corner_radius_all(4)
 	btn_style.set_content_margin_all(6)
 
 	var btn_hover := StyleBoxFlat.new()
-	btn_hover.bg_color = Color(0.26, 0.29, 0.34, 1.0)  # Lighter hover
+	btn_hover.bg_color = Color(0.18, 0.21, 0.25, 1.0)  # Lighter hover
 	btn_hover.set_corner_radius_all(4)
 	btn_hover.set_content_margin_all(6)
 
 	var btn_pressed := StyleBoxFlat.new()
-	btn_pressed.bg_color = Color(0.17, 0.19, 0.24, 1.0)  # Darker pressed
+	btn_pressed.bg_color = Color(0.11, 0.13, 0.16, 1.0)  # Darker pressed
 	btn_pressed.set_corner_radius_all(4)
 	btn_pressed.set_content_margin_all(6)
 

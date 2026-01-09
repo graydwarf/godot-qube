@@ -107,7 +107,7 @@ func _update_styles() -> void:
 
 	# Header style - rounded top corners, bottom border only when expanded
 	var header_style := StyleBoxFlat.new()
-	header_style.bg_color = Color(0.212, 0.239, 0.290, 1.0)  # #363D4A
+	header_style.bg_color = Color(0.145, 0.169, 0.204, 1.0)  # #252B34
 	header_style.border_color = Color(0.3, 0.35, 0.45, 0.5)
 	header_style.set_border_width_all(1)
 	header_style.set_content_margin_all(12)
@@ -128,7 +128,7 @@ func _update_styles() -> void:
 	if _body_panel:
 		# Body style - rounded bottom corners, no top corners
 		var body_style := StyleBoxFlat.new()
-		body_style.bg_color = Color(0.212, 0.239, 0.290, 1.0)  # #363D4A
+		body_style.bg_color = Color(0.145, 0.169, 0.204, 1.0)  # #252B34
 		body_style.border_color = Color(0.3, 0.35, 0.45, 0.5)
 		body_style.set_border_width_all(1)
 		body_style.border_width_top = 0  # No top border (header has bottom)

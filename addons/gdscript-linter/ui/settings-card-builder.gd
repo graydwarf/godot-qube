@@ -31,7 +31,7 @@ func _init(reset_icon: Texture2D) -> void:
 # Creates the standard card style used by all settings cards
 static func create_card_style() -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.212, 0.239, 0.290, 1.0)  # #363D4A
+	style.bg_color = Color(0.145, 0.169, 0.204, 1.0)  # #252B34
 	style.border_color = Color(0.3, 0.35, 0.45, 0.5)
 	style.set_border_width_all(1)
 	style.set_corner_radius_all(6)
