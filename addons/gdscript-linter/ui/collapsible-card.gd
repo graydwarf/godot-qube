@@ -2,7 +2,7 @@
 # https://poplava.itch.io
 @tool
 extends VBoxContainer
-class_name QubeCollapsibleCard
+class_name GDLintCollapsibleCard
 ## A card that can be collapsed/expanded with persistent state
 ## Structure: Header panel (always visible) + Body panel (shown when expanded)
 

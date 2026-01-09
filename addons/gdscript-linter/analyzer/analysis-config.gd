@@ -1,6 +1,6 @@
 # GDScript Linter - Static code quality analyzer
 # https://poplava.itch.io
-class_name QubeConfig
+class_name GDLintConfig
 extends Resource
 ## Configuration for analysis thresholds and enabled checks
 
@@ -40,7 +40,7 @@ extends Resource
 # Scanning options
 @export var respect_gdignore: bool = true  # Skip directories containing .gdignore files
 @export var scan_addons: bool = false  # Include addons/ folder in scans (disabled by default)
-@export var respect_ignore_directives: bool = true  # Process qube:ignore comments (false = show all issues)
+@export var respect_ignore_directives: bool = true  # Process gdlint:ignore comments (false = show all issues)
 
 # Complexity thresholds
 @export var cyclomatic_warning: int = 10
@@ -63,11 +63,11 @@ extends Resource
 var todo_patterns: Array[String] = ["TODO", "FIXME", "HACK", "XXX", "BUG", "TEMP"]
 
 # Patterns for print detection (whitelist DebugLogger)
-var print_patterns: Array[String] = ["print(", "print_debug(", "prints(", "printt(", "printraw("]  # qube:ignore-line:print-statement
+var print_patterns: Array[String] = ["print(", "print_debug(", "prints(", "printt(", "printraw("]  # gdlint:ignore-line:print-statement
 var print_whitelist: Array[String] = ["DebugLogger"]
 
 # Allowed magic numbers (won't be flagged)
-# qube:ignore-next-line:magic-number
+# gdlint:ignore-next-line:magic-number
 var allowed_numbers: Array = [0, 1, -1, 2, 0.0, 1.0, 0.5, 2.0, -1.0, 100, 255, 10, 60, 90, 180, 360]
 
 # Patterns that indicate commented-out code (not regular comments)
@@ -83,9 +83,9 @@ static func get_default():
 	return config
 
 
-# Load settings from .gdqube.cfg if it exists in project root
+# Load settings from .gdlint.cfg if it exists in project root
 func load_project_config(project_path: String = "res://") -> void:
-	var config_path := project_path.path_join(".gdqube.cfg")
+	var config_path := project_path.path_join(".gdlint.cfg")
 	if not FileAccess.file_exists(config_path):
 		return
 

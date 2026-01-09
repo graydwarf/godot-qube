@@ -1,18 +1,18 @@
-# qube:ignore-file:file-length=414
+# gdlint:ignore-file:file-length=414
 # GDScript Linter - Ignore directive handler
 # See IGNORE_RULES.md for directive syntax and usage
 # https://poplava.itch.io
-class_name QubeIgnoreHandler
+class_name GDLintIgnoreHandler
 extends RefCounted
-## Handles parsing and checking of qube:ignore directives
+## Handles parsing and checking of gdlint:ignore directives
 
-const IGNORE_LINE_PATTERN := "qube:ignore-line"
-const IGNORE_NEXT_LINE_PATTERN := "qube:ignore-next-line"
-const IGNORE_FUNCTION_PATTERN := "qube:ignore-function"
-const IGNORE_BLOCK_START_PATTERN := "qube:ignore-block-start"
-const IGNORE_BLOCK_END_PATTERN := "qube:ignore-block-end"
-const IGNORE_FILE_PATTERN := "qube:ignore-file"
-const IGNORE_BELOW_PATTERN := "qube:ignore-below"
+const IGNORE_LINE_PATTERN := "gdlint:ignore-line"
+const IGNORE_NEXT_LINE_PATTERN := "gdlint:ignore-next-line"
+const IGNORE_FUNCTION_PATTERN := "gdlint:ignore-function"
+const IGNORE_BLOCK_START_PATTERN := "gdlint:ignore-block-start"
+const IGNORE_BLOCK_END_PATTERN := "gdlint:ignore-block-end"
+const IGNORE_FILE_PATTERN := "gdlint:ignore-file"
+const IGNORE_BELOW_PATTERN := "gdlint:ignore-below"
 
 var _lines: Array = []
 var _ignored_ranges: Array = []  # Array of {start: int, end: int, check_id: String, pinned_values: Dictionary}
@@ -61,11 +61,11 @@ func should_ignore(line_num: int, check_id: String) -> bool:
 
 	var current_line: String = _lines[line_idx]
 
-	# Check current line for # qube:ignore-line or # qube:ignore-line:check-id
+	# Check current line for # gdlint:ignore-line or # gdlint:ignore-line:check-id
 	if _matches_inline_ignore(current_line, check_id):
 		return true
 
-	# Check previous line for # qube:ignore-next-line
+	# Check previous line for # gdlint:ignore-next-line
 	if line_idx > 0 and _matches_ignore_next_line(_lines[line_idx - 1], check_id):
 		return true
 
@@ -205,7 +205,7 @@ func _is_below_ignored(line_num: int, check_id: String) -> bool:
 
 
 # Parse file-level ignore directives from the first few lines
-# Looks for # qube:ignore-file or # qube:ignore-file:check-id or # qube:ignore-file:check-id=value
+# Looks for # gdlint:ignore-file or # gdlint:ignore-file:check-id or # gdlint:ignore-file:check-id=value
 func _parse_file_ignores(lines: Array) -> Array:
 	var checks: Array = []
 	_file_pinned_values = {}
@@ -230,7 +230,7 @@ func _parse_file_ignores(lines: Array) -> Array:
 
 
 # Parse ignore-below directives - ignore from that line to end of file
-# Looks for # qube:ignore-below or # qube:ignore-below:check-id or # qube:ignore-below:check-id=value
+# Looks for # gdlint:ignore-below or # gdlint:ignore-below:check-id or # gdlint:ignore-below:check-id=value
 func _parse_ignore_below(lines: Array) -> Array:
 	var result: Array = []
 
@@ -268,14 +268,14 @@ func _is_in_ignored_range(line_num: int, check_id: String) -> bool:
 	return false
 
 
-# Check if line has inline qube:ignore-line directive matching check_id
+# Check if line has inline gdlint:ignore-line directive matching check_id
 func _matches_inline_ignore(line: String, check_id: String) -> bool:
 	if IGNORE_LINE_PATTERN not in line or IGNORE_NEXT_LINE_PATTERN in line:
 		return false
 	return _check_directive_match(line, IGNORE_LINE_PATTERN, check_id)
 
 
-# Check if line has qube:ignore-next-line directive matching check_id
+# Check if line has gdlint:ignore-next-line directive matching check_id
 func _matches_ignore_next_line(line: String, check_id: String) -> bool:
 	if IGNORE_NEXT_LINE_PATTERN not in line:
 		return false
@@ -283,8 +283,8 @@ func _matches_ignore_next_line(line: String, check_id: String) -> bool:
 
 
 # Check if a directive in line matches the check_id (or ignores all if no specific id)
-# Supports comma-separated check IDs: qube:ignore-line:check1,check2,check3
-# Supports pinned value syntax: qube:ignore-line:check-id=value
+# Supports comma-separated check IDs: gdlint:ignore-line:check1,check2,check3
+# Supports pinned value syntax: gdlint:ignore-line:check-id=value
 func _check_directive_match(line: String, pattern: String, check_id: String) -> bool:
 	var ignore_pos := line.find(pattern)
 	if ignore_pos < 0:
@@ -307,7 +307,7 @@ func _check_directive_match(line: String, pattern: String, check_id: String) -> 
 	return true
 
 
-# Parse ignored ranges from qube:ignore-function and qube:ignore-block directives
+# Parse ignored ranges from gdlint:ignore-function and gdlint:ignore-block directives
 func _parse_ignored_ranges(lines: Array) -> Array:
 	var ranges: Array = []
 
@@ -355,15 +355,15 @@ func _parse_ignored_ranges(lines: Array) -> Array:
 	return ranges
 
 
-# Extract optional check_id from directive (e.g., "qube:ignore-function:print-statement" -> "print-statement")
+# Extract optional check_id from directive (e.g., "gdlint:ignore-function:print-statement" -> "print-statement")
 func _extract_check_id(line: String, pattern: String) -> String:
 	var result := _extract_check_id_with_pin(line, pattern)
 	return result.check_id
 
 
 # Extract check_id and optional pinned value from directive
-# e.g., "qube:ignore-function:long-function=35" -> {check_id: "long-function", pinned_value: 35}
-# e.g., "qube:ignore-function:print-statement" -> {check_id: "print-statement", pinned_value: -1}
+# e.g., "gdlint:ignore-function:long-function=35" -> {check_id: "long-function", pinned_value: 35}
+# e.g., "gdlint:ignore-function:print-statement" -> {check_id: "print-statement", pinned_value: -1}
 func _extract_check_id_with_pin(line: String, pattern: String) -> Dictionary:
 	var pos := line.find(pattern)
 	if pos < 0:

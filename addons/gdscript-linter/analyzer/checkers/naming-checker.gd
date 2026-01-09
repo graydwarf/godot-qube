@@ -1,6 +1,6 @@
 # GDScript Linter - Naming convention checker
 # https://poplava.itch.io
-class_name QubeNamingChecker
+class_name GDLintNamingChecker
 extends RefCounted
 
 const SNAKE_CASE_PATTERN := "^[a-z][a-z0-9_]*$"
@@ -40,7 +40,7 @@ func is_screaming_snake_case(name_to_check: String) -> bool:
 
 
 # Returns array of issue dictionaries: { line: int, severity: String, check_id: String, message: String }
-# qube:ignore-function:long-function - Linear structure with 4 parallel naming checks, refactoring would reduce readability
+# gdlint:ignore-function:long-function - Linear structure with 4 parallel naming checks, refactoring would reduce readability
 func check_line(line: String, line_num: int) -> Array:
 	var issues := []
 	var trimmed := line.strip_edges()
@@ -95,7 +95,7 @@ func check_line(line: String, line_num: int) -> Array:
 
 
 # Returns issue dictionary or null
-# qube:ignore-function:long-function - Linear validation flow, minimal overage (32 lines)
+# gdlint:ignore-function:long-function - Linear validation flow, minimal overage (32 lines)
 func check_function_naming(func_name: String, line_num: int) -> Variant:
 	if not config.check_naming_conventions:
 		return null

@@ -1,6 +1,6 @@
 # GDScript Linter - Unused variable/parameter checker
 # https://poplava.itch.io
-class_name QubeUnusedChecker
+class_name GDLintUnusedChecker
 extends RefCounted
 
 var config

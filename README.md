@@ -132,21 +132,21 @@ Suppress warnings for intentional code patterns using inline comments:
 
 | Directive                      | Scope           |
 |--------------------------------|-----------------|
-| `qube:ignore-file`             | Entire file     |
-| `qube:ignore-below`            | Line to EOF     |
-| `qube:ignore-function`         | Entire function |
-| `qube:ignore-block-start/end`  | Code block      |
-| `qube:ignore-next-line`        | Next line       |
-| `qube:ignore-line`             | Same line       |
+| `gdlint:ignore-file`             | Entire file     |
+| `gdlint:ignore-below`            | Line to EOF     |
+| `gdlint:ignore-function`         | Entire function |
+| `gdlint:ignore-block-start/end`  | Code block      |
+| `gdlint:ignore-next-line`        | Next line       |
+| `gdlint:ignore-line`             | Same line       |
 
-All directives support optional check IDs: `# qube:ignore-line:magic-number,print-statement`
+All directives support optional check IDs: `# gdlint:ignore-line:magic-number,print-statement`
 
 #### Pinned Exceptions
 
 Track technical debt regression by pinning numeric values:
 
 ```gdscript
-# qube:ignore-function:long-function=35
+# gdlint:ignore-function:long-function=35
 func my_complex_function():
     # Function is 35 lines - pinned at this value
 ```
@@ -162,7 +162,7 @@ See **[IGNORE_RULES.md](addons/gdscript-linter/IGNORE_RULES.md)** for full synta
 
 ### Project Configuration
 
-Create a `.gdqube.cfg` file in your project root to customize settings:
+Create a `.gdlint.cfg` file in your project root to customize settings:
 
 ```ini
 [limits]

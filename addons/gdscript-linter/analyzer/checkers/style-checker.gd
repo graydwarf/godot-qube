@@ -1,6 +1,6 @@
 # GDScript Linter - Style checker (magic numbers, commented code, type hints)
 # https://poplava.itch.io
-class_name QubeStyleChecker
+class_name GDLintStyleChecker
 extends RefCounted
 
 var config

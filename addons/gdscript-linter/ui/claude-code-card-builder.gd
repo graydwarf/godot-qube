@@ -2,11 +2,11 @@
 # https://poplava.itch.io
 @tool
 extends RefCounted
-class_name QubeClaudeCodeCardBuilder
+class_name GDLintClaudeCodeCardBuilder
 ## Creates the Claude Code integration settings card
 
 const DEFAULT_COMMAND := "claude --permission-mode plan"
-const DEFAULT_INSTRUCTIONS := "When analyzing issues, recommend the best solution - which may be a qube:ignore directive instead of refactoring. If code is clean and readable but slightly over a limit, suggest adding an ignore comment rather than restructuring working code. Always explain why you're recommending a refactor vs an ignore directive. IMPORTANT: Before adding any ignore directive, read addons/gdscript-linter/IGNORE_RULES.md for correct syntax and available directive types."
+const DEFAULT_INSTRUCTIONS := "When analyzing issues, recommend the best solution - which may be a gdlint:ignore directive instead of refactoring. If code is clean and readable but slightly over a limit, suggest adding an ignore comment rather than restructuring working code. Always explain why you're recommending a refactor vs an ignore directive. IMPORTANT: Before adding any ignore directive, read addons/gdscript-linter/IGNORE_RULES.md for correct syntax and available directive types."
 
 var _reset_icon: Texture2D
 
@@ -16,8 +16,8 @@ func _init(reset_icon: Texture2D) -> void:
 
 
 # Create Claude Code settings collapsible card
-func create_card(controls: Dictionary) -> QubeCollapsibleCard:
-	var card := QubeCollapsibleCard.new("Claude Code Integration", "code_quality/ui/claude_collapsed")
+func create_card(controls: Dictionary) -> GDLintCollapsibleCard:
+	var card := GDLintCollapsibleCard.new("Claude Code Integration", "code_quality/ui/claude_collapsed")
 	var vbox := card.get_content_container()
 
 	_add_enable_section(vbox, controls)

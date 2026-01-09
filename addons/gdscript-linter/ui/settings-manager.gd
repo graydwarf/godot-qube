@@ -2,14 +2,14 @@
 # https://poplava.itch.io
 @tool
 extends RefCounted
-class_name QubeSettingsManager
+class_name GDLintSettingsManager
 ## Handles loading and saving settings from EditorSettings
 
 signal setting_changed(key: String, value: Variant)
 signal display_refresh_needed
 
 const CLAUDE_CODE_DEFAULT_COMMAND := "claude --permission-mode plan"
-const CLAUDE_CODE_DEFAULT_INSTRUCTIONS := "When analyzing issues, recommend the best solution - which may be a qube:ignore directive instead of refactoring. If code is clean and readable but slightly over a limit, suggest adding an ignore comment rather than restructuring working code. Always explain why you're recommending a refactor vs an ignore directive. IMPORTANT: Before adding any ignore directive, read addons/gdscript-linter/IGNORE_RULES.md for correct syntax and available directive types."
+const CLAUDE_CODE_DEFAULT_INSTRUCTIONS := "When analyzing issues, recommend the best solution - which may be a gdlint:ignore directive instead of refactoring. If code is clean and readable but slightly over a limit, suggest adding an ignore comment rather than restructuring working code. Always explain why you're recommending a refactor vs an ignore directive. IMPORTANT: Before adding any ignore directive, read addons/gdscript-linter/IGNORE_RULES.md for correct syntax and available directive types."
 
 # Settings state - Display
 var show_total_issues: bool = true
@@ -57,9 +57,9 @@ var _check_control_keys: Array[String] = [
 ]
 
 # References
-var config: Resource  # QubeConfig
+var config: Resource  # GDLintConfig
 var controls: Dictionary = {}
-var _limits_handler: QubeSettingsLimitsHandler
+var _limits_handler: GDLintSettingsLimitsHandler
 
 
 func _init(p_config: Resource) -> void:
@@ -243,7 +243,7 @@ func connect_controls(export_btn: Button, html_export_btn: Button) -> void:
 	_connect_check_signals()
 
 	# Analysis limits (delegated to handler)
-	_limits_handler = QubeSettingsLimitsHandler.new(config, controls, save_setting)
+	_limits_handler = GDLintSettingsLimitsHandler.new(config, controls, save_setting)
 	_limits_handler.connect_controls()
 
 	# Claude Code settings

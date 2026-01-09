@@ -1,6 +1,6 @@
 # GDScript Linter - Static code quality analyzer
 # https://poplava.itch.io
-class_name QubeIssue
+class_name GDLintIssue
 extends RefCounted
 ## Represents a single code quality issue with location info for navigation
 

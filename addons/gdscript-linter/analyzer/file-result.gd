@@ -1,6 +1,6 @@
 # GDScript Linter - Static code quality analyzer
 # https://poplava.itch.io
-class_name QubeFileResult
+class_name GDLintFileResult
 extends RefCounted
 ## Holds analysis results for a single file
 

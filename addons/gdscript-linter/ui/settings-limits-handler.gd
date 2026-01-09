@@ -2,10 +2,10 @@
 # https://poplava.itch.io
 @tool
 extends RefCounted
-class_name QubeSettingsLimitsHandler
+class_name GDLintSettingsLimitsHandler
 ## Handles analysis limit SpinBox changes and persistence
 
-var _config: Resource  # QubeConfig
+var _config: Resource  # GDLintConfig
 var _controls: Dictionary
 var _save_callback: Callable
 

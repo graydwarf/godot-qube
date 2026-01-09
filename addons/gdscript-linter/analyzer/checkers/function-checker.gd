@@ -1,13 +1,13 @@
 # GDScript Linter - Function analysis checker
 # https://poplava.itch.io
-class_name QubeFunctionChecker
+class_name GDLintFunctionChecker
 extends RefCounted
 
 var config
-var _naming_checker: QubeNamingChecker
+var _naming_checker: GDLintNamingChecker
 
 
-func _init(p_config, naming_checker: QubeNamingChecker) -> void:
+func _init(p_config, naming_checker: GDLintNamingChecker) -> void:
 	config = p_config
 	_naming_checker = naming_checker
 
@@ -200,7 +200,7 @@ func _get_indent_level(line: String) -> int:
 	return spaces / 4
 
 
-# qube:ignore-next-line:high-complexity - Complexity calculation is naturally complex
+# gdlint:ignore-next-line:high-complexity - Complexity calculation is naturally complex
 func _calculate_cyclomatic_complexity(body_lines: Array) -> int:
 	var complexity := 1  # Base complexity
 

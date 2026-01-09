@@ -1,6 +1,6 @@
 # GDScript Linter - Static code quality analyzer
 # https://poplava.itch.io
-class_name QubeAnalyzer
+class_name GDLintAnalyzer
 extends RefCounted
 ## Core analysis engine - reusable by CLI, plugin, or external tools
 
@@ -12,22 +12,22 @@ const IssueClass = preload("res://addons/gdscript-linter/analyzer/issue.gd")
 var config
 var result
 var _start_time: int
-var _ignore_handler: QubeIgnoreHandler
+var _ignore_handler: GDLintIgnoreHandler
 
 # Checkers
-var _naming_checker: QubeNamingChecker
-var _function_checker: QubeFunctionChecker
-var _unused_checker: QubeUnusedChecker
-var _style_checker: QubeStyleChecker
+var _naming_checker: GDLintNamingChecker
+var _function_checker: GDLintFunctionChecker
+var _unused_checker: GDLintUnusedChecker
+var _style_checker: GDLintStyleChecker
 
 
 func _init(p_config = null) -> void:
 	config = p_config if p_config else AnalysisConfigClass.get_default()
-	_naming_checker = QubeNamingChecker.new(config)
-	_function_checker = QubeFunctionChecker.new(config, _naming_checker)
-	_unused_checker = QubeUnusedChecker.new(config)
-	_style_checker = QubeStyleChecker.new(config)
-	_ignore_handler = QubeIgnoreHandler.new()
+	_naming_checker = GDLintNamingChecker.new(config)
+	_function_checker = GDLintFunctionChecker.new(config, _naming_checker)
+	_unused_checker = GDLintUnusedChecker.new(config)
+	_style_checker = GDLintStyleChecker.new(config)
+	_ignore_handler = GDLintIgnoreHandler.new()
 
 
 func analyze_directory(path: String):

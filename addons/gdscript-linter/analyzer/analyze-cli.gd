@@ -19,7 +19,7 @@ const HtmlReportGenerator = preload("res://addons/gdscript-linter/analyzer/html-
 var _target_path: String = "res://"
 var _output_format: String = "console"  # "console", "json", "clickable", "html"
 var _output_file: String = ""  # For HTML output
-var _no_ignore: bool = false  # Bypass all qube:ignore directives
+var _no_ignore: bool = false  # Bypass all gdlint:ignore directives
 var _exit_code: int = 0
 
 func _init() -> void:
@@ -27,7 +27,7 @@ func _init() -> void:
 	_run_analysis()
 	quit(_exit_code)
 
-# qube:ignore-function:long-function - CLI argument parsing with many options
+# gdlint:ignore-function:long-function - CLI argument parsing with many options
 func _parse_arguments() -> void:
 	var args := OS.get_cmdline_user_args()
 
@@ -65,7 +65,7 @@ func _parse_arguments() -> void:
 
 		i += 1
 
-# qube:ignore-function:print-statement - CLI help output
+# gdlint:ignore-function:print-statement - CLI help output
 func _print_help() -> void:
 	print("")
 	print("GDScript Linter - Code Quality Analyzer for GDScript")
@@ -80,7 +80,7 @@ func _print_help() -> void:
 	print("  --clickable       Shorthand for --format clickable (Godot Output panel format)")
 	print("  --html            Shorthand for --format html (generates HTML report)")
 	print("  --output, -o <f>  Output file path (required for --html, default: code_quality_report.html)")
-	print("  --no-ignore       Bypass all qube:ignore directives (show everything)")
+	print("  --no-ignore       Bypass all gdlint:ignore directives (show everything)")
 	print("  --help, -h        Show this help message")
 	print("")
 	print("Exit codes:")
@@ -109,11 +109,11 @@ func _run_analysis() -> void:
 
 	_exit_code = result.get_exit_code()
 
-# qube:ignore-function:print-statement - CLI JSON output
+# gdlint:ignore-function:print-statement - CLI JSON output
 func _output_json(result) -> void:
 	print(JSON.stringify(result.to_dict(), "\t"))
 
-# qube:ignore-function:print-statement,long-function - CLI clickable output
+# gdlint:ignore-function:print-statement,long-function - CLI clickable output
 func _output_clickable(result) -> void:
 	# Format that Godot Output panel makes clickable
 	print("")
@@ -148,7 +148,7 @@ func _output_clickable(result) -> void:
 
 	print("Debt Score: %d | Time: %dms" % [result.get_total_debt_score(), result.analysis_time_ms])
 
-# qube:ignore-function:print-statement - Console output formatting
+# gdlint:ignore-function:print-statement - Console output formatting
 func _output_console(result) -> void:
 	_print_console_header(result)
 	_print_top_files_by_size(result)
@@ -159,11 +159,11 @@ func _output_console(result) -> void:
 	_print_todo_comments(result)
 	_print_console_footer()
 
-# qube:ignore-function:print-statement - CLI console output
+# gdlint:ignore-function:print-statement - CLI console output
 func _print_console_header(result) -> void:
 	print("")
 	print("=" .repeat(60))
-	print("GODOT QUBE - CODE QUALITY REPORT")
+	print("GDSCRIPT LINTER - CODE QUALITY REPORT")
 	print("=" .repeat(60))
 	print("")
 	print("SUMMARY")
@@ -177,7 +177,7 @@ func _print_console_header(result) -> void:
 	print("Analysis time: %dms" % result.analysis_time_ms)
 	print("")
 
-# qube:ignore-function:print-statement - CLI console output
+# gdlint:ignore-function:print-statement - CLI console output
 func _print_top_files_by_size(result) -> void:
 	print("TOP 10 FILES BY SIZE")
 	print("-" .repeat(40))
@@ -188,7 +188,7 @@ func _print_top_files_by_size(result) -> void:
 		print("%4d lines | %s" % [f.line_count, f.file_path])
 	print("")
 
-# qube:ignore-function:print-statement - CLI console output
+# gdlint:ignore-function:print-statement - CLI console output
 func _print_top_files_by_debt(result) -> void:
 	print("TOP 10 FILES BY DEBT SCORE")
 	print("-" .repeat(40))
@@ -201,7 +201,7 @@ func _print_top_files_by_debt(result) -> void:
 		print("Score %3d | %4d lines | %s" % [f.debt_score, f.line_count, f.file_path])
 	print("")
 
-# qube:ignore-function:print-statement - CLI console output
+# gdlint:ignore-function:print-statement - CLI console output
 func _print_critical_issues(result) -> void:
 	var critical: Array = result.get_issues_by_severity(IssueClass.Severity.CRITICAL)
 	if critical.size() == 0:
@@ -212,7 +212,7 @@ func _print_critical_issues(result) -> void:
 		print("  %s" % issue.get_clickable_format())
 	print("")
 
-# qube:ignore-function:print-statement - CLI console output
+# gdlint:ignore-function:print-statement - CLI console output
 func _print_long_functions(result) -> void:
 	print("LONG FUNCTIONS")
 	print("-" .repeat(40))
@@ -223,7 +223,7 @@ func _print_long_functions(result) -> void:
 		print("  %s" % issue.get_clickable_format())
 	print("")
 
-# qube:ignore-function:print-statement - CLI console output
+# gdlint:ignore-function:print-statement - CLI console output
 func _print_pinned_exception_issues(result) -> void:
 	var pinned_issues: Array = result.issues.filter(func(i): return i.check_id.ends_with("-exceeded") or i.check_id.ends_with("-improved") or i.check_id.ends_with("-unnecessary"))
 	if pinned_issues.size() == 0:
@@ -235,7 +235,7 @@ func _print_pinned_exception_issues(result) -> void:
 	print("")
 
 
-# qube:ignore-function:print-statement - CLI console output
+# gdlint:ignore-function:print-statement - CLI console output
 func _print_todo_comments(result) -> void:
 	var todo_issues: Array = result.issues.filter(func(i): return i.check_id == "todo-comment")
 	if todo_issues.size() == 0:
@@ -249,7 +249,7 @@ func _print_todo_comments(result) -> void:
 		print("  ... and %d more" % (todo_issues.size() - 10))
 	print("")
 
-# qube:ignore-function:print-statement - CLI console output
+# gdlint:ignore-function:print-statement - CLI console output
 func _print_console_footer() -> void:
 	print("=" .repeat(60))
 	print("Run with --clickable for Godot Output panel clickable links")
@@ -257,7 +257,7 @@ func _print_console_footer() -> void:
 	print("=" .repeat(60))
 
 
-# qube:ignore-function:print-statement - CLI HTML output
+# gdlint:ignore-function:print-statement - CLI HTML output
 func _output_html(result) -> void:
 	var output_path := _output_file if _output_file != "" else "code_quality_report.html"
 

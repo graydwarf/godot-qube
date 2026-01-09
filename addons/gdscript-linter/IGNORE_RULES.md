@@ -7,12 +7,12 @@ Suppress specific warnings when code is intentionally written a certain way.
 Place within the first 10 lines of the file.
 
 ```gdscript
-# qube:ignore-file
+# gdlint:ignore-file
 extends Node
 # This file will have ALL checks ignored
 
 # Or ignore specific checks for the entire file:
-# qube:ignore-file:file-length,long-function
+# gdlint:ignore-file:file-length,long-function
 extends Node
 ```
 
@@ -23,29 +23,29 @@ Ignore from this line to end of file. Useful for generated code, data tables, or
 ```gdscript
 # ... maintained code above ...
 
-# qube:ignore-below
+# gdlint:ignore-below
 # Everything below this line is ignored
 
 var GENERATED_DATA = [1, 2, 3, 4, 5]  # No magic-number warnings
 func _legacy_code(): pass            # No long-function warnings
 
 # Or ignore specific checks only:
-# qube:ignore-below:magic-number,missing-type
+# gdlint:ignore-below:magic-number,missing-type
 ```
 
 ## Line Ignores
 
 ```gdscript
 # Ignore all checks on next line
-# qube:ignore-next-line
+# gdlint:ignore-next-line
 var magic = 42
 
 # Ignore all checks on same line
-var another_magic = 100  # qube:ignore-line
+var another_magic = 100  # gdlint:ignore-line
 
 # Ignore specific check (or comma-separated list)
-var debug_print = true  # qube:ignore-line:magic-number
-var config = 255  # qube:ignore-line:magic-number,missing-type
+var debug_print = true  # gdlint:ignore-line:magic-number
+var config = 255  # gdlint:ignore-line:magic-number,missing-type
 ```
 
 ## Function Ignores
@@ -54,14 +54,14 @@ Place the comment directly above the `func` declaration.
 
 ```gdscript
 # Ignore ALL checks in function
-# qube:ignore-function
+# gdlint:ignore-function
 func _print_help() -> void:
     print("Usage: ...")
     print("Options:")
     print("  --help  Show this message")
 
 # Ignore specific checks (comma-separated)
-# qube:ignore-function:print-statement,long-function
+# gdlint:ignore-function:print-statement,long-function
 func _output_results() -> void:
     print("Results:")
     # ... many lines of output formatting ...
@@ -71,16 +71,16 @@ func _output_results() -> void:
 
 ```gdscript
 # Ignore all checks in block
-# qube:ignore-block-start
+# gdlint:ignore-block-start
 var magic1 = 42
 var magic2 = 100
-# qube:ignore-block-end
+# gdlint:ignore-block-end
 
 # Ignore specific check in block
-# qube:ignore-block-start:magic-number
+# gdlint:ignore-block-start:magic-number
 var threshold = 1000
 var limit = 5000
-# qube:ignore-block-end
+# gdlint:ignore-block-end
 ```
 
 ## Pinned Exceptions
@@ -89,15 +89,15 @@ Track technical debt regression by pinning a value. If the actual value exceeds 
 
 ```gdscript
 # Pin function at 35 lines - warns if it grows beyond 35
-# qube:ignore-function:long-function=35
+# gdlint:ignore-function:long-function=35
 func my_complex_function() -> void:
     # ... 35 lines of code ...
 
 # Pin file at 400 lines
-# qube:ignore-file:file-length=400
+# gdlint:ignore-file:file-length=400
 
 # Pin complexity at 12
-# qube:ignore-next-line:high-complexity=12
+# gdlint:ignore-next-line:high-complexity=12
 func branchy_logic() -> void:
     # ...
 ```

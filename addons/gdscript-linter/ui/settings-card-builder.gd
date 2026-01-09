@@ -2,7 +2,7 @@
 # https://poplava.itch.io
 @tool
 extends RefCounted
-class_name QubeSettingsCardBuilder
+class_name GDLintSettingsCardBuilder
 ## Creates settings panel cards with consistent styling
 
 # Default analysis limits
@@ -18,14 +18,14 @@ const DEFAULT_GOD_CLASS_FUNCS := 20
 const DEFAULT_GOD_CLASS_SIGNALS := 10
 
 var _reset_icon: Texture2D
-var _claude_card_builder: QubeClaudeCodeCardBuilder
-var _help_card_builder: QubeHelpCardBuilder
+var _claude_card_builder: GDLintClaudeCodeCardBuilder
+var _help_card_builder: GDLintHelpCardBuilder
 
 
 func _init(reset_icon: Texture2D) -> void:
 	_reset_icon = reset_icon
-	_claude_card_builder = QubeClaudeCodeCardBuilder.new(reset_icon)
-	_help_card_builder = QubeHelpCardBuilder.new()
+	_claude_card_builder = GDLintClaudeCodeCardBuilder.new(reset_icon)
+	_help_card_builder = GDLintHelpCardBuilder.new()
 
 
 # Creates the standard card style used by all settings cards
@@ -75,8 +75,8 @@ func build_settings_panel(settings_panel: PanelContainer, controls: Dictionary) 
 
 
 # Create Display Options collapsible card with checkboxes
-func create_display_options_card(controls: Dictionary) -> QubeCollapsibleCard:
-	var card := QubeCollapsibleCard.new("Display Options", "code_quality/ui/display_options_collapsed")
+func create_display_options_card(controls: Dictionary) -> GDLintCollapsibleCard:
+	var card := GDLintCollapsibleCard.new("Display Options", "code_quality/ui/display_options_collapsed")
 	var vbox := card.get_content_container()
 
 	# Row of checkboxes for display toggles
@@ -94,8 +94,8 @@ func create_display_options_card(controls: Dictionary) -> QubeCollapsibleCard:
 
 
 # Create Scan Options collapsible card
-func create_scan_options_card(controls: Dictionary) -> QubeCollapsibleCard:
-	var card := QubeCollapsibleCard.new("Scan Options", "code_quality/ui/scan_options_collapsed")
+func create_scan_options_card(controls: Dictionary) -> GDLintCollapsibleCard:
+	var card := GDLintCollapsibleCard.new("Scan Options", "code_quality/ui/scan_options_collapsed")
 	var vbox := card.get_content_container()
 
 	var hbox := HBoxContainer.new()
@@ -111,8 +111,8 @@ func create_scan_options_card(controls: Dictionary) -> QubeCollapsibleCard:
 
 
 # Create Code Checks collapsible card with toggles for all analysis checks
-func create_code_checks_card(controls: Dictionary) -> QubeCollapsibleCard:
-	var card := QubeCollapsibleCard.new("Code Checks", "code_quality/ui/code_checks_collapsed")
+func create_code_checks_card(controls: Dictionary) -> GDLintCollapsibleCard:
+	var card := GDLintCollapsibleCard.new("Code Checks", "code_quality/ui/code_checks_collapsed")
 	var vbox := card.get_content_container()
 
 	# Enable All / Disable All buttons row
@@ -216,8 +216,8 @@ func _add_check_to_grid(grid: GridContainer, label_text: String, tooltip: String
 
 
 # Create Analysis Limits collapsible card with spinboxes
-func create_limits_card(controls: Dictionary) -> QubeCollapsibleCard:
-	var card := QubeCollapsibleCard.new("Analysis Limits", "code_quality/ui/limits_collapsed")
+func create_limits_card(controls: Dictionary) -> GDLintCollapsibleCard:
+	var card := GDLintCollapsibleCard.new("Analysis Limits", "code_quality/ui/limits_collapsed")
 	var vbox := card.get_content_container()
 
 	# Reset All button row
@@ -344,7 +344,7 @@ func _add_spin_row(grid: GridContainer, label_text: String, min_val: int, max_va
 
 
 # Create Help collapsible card
-func _create_help_card() -> QubeCollapsibleCard:
-	var card := QubeCollapsibleCard.new("Help", "code_quality/ui/help_collapsed")
+func _create_help_card() -> GDLintCollapsibleCard:
+	var card := GDLintCollapsibleCard.new("Help", "code_quality/ui/help_collapsed")
 	_help_card_builder.create_card_content(card.get_content_container())
 	return card

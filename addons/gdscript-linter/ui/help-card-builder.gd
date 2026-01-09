@@ -2,7 +2,7 @@
 # https://poplava.itch.io
 @tool
 extends RefCounted
-class_name QubeHelpCardBuilder
+class_name GDLintHelpCardBuilder
 ## Creates the Help section card with ignore rules, CLI usage, and shortcuts
 
 
@@ -58,32 +58,32 @@ func _add_ignore_rules_section(parent: VBoxContainer) -> void:
 
 	# Examples for each directive
 	_add_thin_separator(parent)
-	_add_ignore_example(parent, "qube:ignore-file",
-		"# qube:ignore-file\n# qube:ignore-file:file-length,long-function")
+	_add_ignore_example(parent, "gdlint:ignore-file",
+		"# gdlint:ignore-file\n# gdlint:ignore-file:file-length,long-function")
 
 	_add_thin_separator(parent)
-	_add_ignore_example(parent, "qube:ignore-below",
-		"# qube:ignore-below\n# qube:ignore-below:magic-number")
+	_add_ignore_example(parent, "gdlint:ignore-below",
+		"# gdlint:ignore-below\n# gdlint:ignore-below:magic-number")
 
 	_add_thin_separator(parent)
-	_add_ignore_example(parent, "qube:ignore-function",
-		"# qube:ignore-function\nfunc _debug(): ...\n\n# qube:ignore-function:print-statement\nfunc _log(): ...")
+	_add_ignore_example(parent, "gdlint:ignore-function",
+		"# gdlint:ignore-function\nfunc _debug(): ...\n\n# gdlint:ignore-function:print-statement\nfunc _log(): ...")
 
 	_add_thin_separator(parent)
-	_add_ignore_example(parent, "qube:ignore-block-start/end",
-		"# qube:ignore-block-start:magic-number\nvar x = 42\nvar y = 100\n# qube:ignore-block-end")
+	_add_ignore_example(parent, "gdlint:ignore-block-start/end",
+		"# gdlint:ignore-block-start:magic-number\nvar x = 42\nvar y = 100\n# gdlint:ignore-block-end")
 
 	_add_thin_separator(parent)
-	_add_ignore_example(parent, "qube:ignore-next-line",
-		"# qube:ignore-next-line\nvar magic = 42")
+	_add_ignore_example(parent, "gdlint:ignore-next-line",
+		"# gdlint:ignore-next-line\nvar magic = 42")
 
 	_add_thin_separator(parent)
-	_add_ignore_example(parent, "qube:ignore-line",
-		"var magic = 42  # qube:ignore-line\nvar x = 100  # qube:ignore-line:magic-number")
+	_add_ignore_example(parent, "gdlint:ignore-line",
+		"var magic = 42  # gdlint:ignore-line\nvar x = 100  # gdlint:ignore-line:magic-number")
 
 	_add_thin_separator(parent)
 	_add_ignore_example(parent, "Pinned Exceptions (=value)",
-		"# qube:ignore-function:long-function=35\nfunc complex(): ...  # Warns if exceeds 35 lines")
+		"# gdlint:ignore-function:long-function=35\nfunc complex(): ...  # Warns if exceeds 35 lines")
 
 
 func _add_ignore_table(parent: VBoxContainer) -> void:
@@ -94,12 +94,12 @@ func _add_ignore_table(parent: VBoxContainer) -> void:
 	parent.add_child(grid)
 
 	var directives := [
-		["qube:ignore-file", "Entire file"],
-		["qube:ignore-below", "Line to EOF"],
-		["qube:ignore-function", "Entire function"],
-		["qube:ignore-block-start/end", "Code block"],
-		["qube:ignore-next-line", "Next line"],
-		["qube:ignore-line", "Same line"],
+		["gdlint:ignore-file", "Entire file"],
+		["gdlint:ignore-below", "Line to EOF"],
+		["gdlint:ignore-function", "Entire function"],
+		["gdlint:ignore-block-start/end", "Code block"],
+		["gdlint:ignore-next-line", "Next line"],
+		["gdlint:ignore-line", "Same line"],
 	]
 
 	for entry in directives:

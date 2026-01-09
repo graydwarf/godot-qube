@@ -1,4 +1,4 @@
-# qube:ignore-file:file-length
+# gdlint:ignore-file:file-length
 # GDScript Linter - Static code quality analyzer
 # https://poplava.itch.io
 @tool
