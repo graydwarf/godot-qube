@@ -46,7 +46,7 @@ func _add_section_header(parent: VBoxContainer, title: String, description: Stri
 	hbox.add_child(header)
 
 	var desc := Label.new()
-	desc.text = " -  " + description
+	desc.text = " -   " + description
 	desc.add_theme_font_size_override("font_size", 14)
 	desc.add_theme_color_override("font_color", Color(0.55, 0.57, 0.6))
 	hbox.add_child(desc)
@@ -102,6 +102,14 @@ func _add_instructions_section(parent: VBoxContainer, controls: Dictionary) -> v
 	controls.claude_instructions_edit.custom_minimum_size = Vector2(0, 120)
 	controls.claude_instructions_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	controls.claude_instructions_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+
+	var border_style := StyleBoxFlat.new()
+	border_style.bg_color = Color(0.15, 0.17, 0.2)
+	border_style.border_color = Color(0.3, 0.32, 0.35)
+	border_style.set_border_width_all(1)
+	border_style.set_corner_radius_all(2)
+	controls.claude_instructions_edit.add_theme_stylebox_override("normal", border_style)
+
 	parent.add_child(controls.claude_instructions_edit)
 
 	var hint := Label.new()

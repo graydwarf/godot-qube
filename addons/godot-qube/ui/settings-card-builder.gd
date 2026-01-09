@@ -163,7 +163,7 @@ func create_header_bar() -> HBoxContainer:
 
 	# Subtitle: " - Code Quality Analyzer for GDScript" in muted color
 	var subtitle := Label.new()
-	subtitle.text = " - Code Quality Analyzer for GDScript"
+	subtitle.text = " -   Code Quality Analyzer for GDScript"
 	subtitle.add_theme_font_size_override("font_size", 17)
 	subtitle.add_theme_color_override("font_color", Color(0.6, 0.65, 0.7))
 	hbox.add_child(subtitle)
@@ -183,6 +183,7 @@ func create_header_bar() -> HBoxContainer:
 		var btn := Button.new()
 		btn.text = data[0]
 		btn.flat = true
+		btn.tooltip_text = data[1]
 		btn.add_theme_color_override("font_color", Color(0.5, 0.7, 1.0))
 		btn.add_theme_color_override("font_hover_color", Color(0.7, 0.85, 1.0))
 		btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND

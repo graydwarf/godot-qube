@@ -102,6 +102,12 @@ func _init_node_references() -> void:
 	settings_button = $VBox/Toolbar/SettingsButton
 	settings_panel = $VBox/SettingsPanel
 
+	# Add internal content padding to results label
+	var results_style := StyleBoxFlat.new()
+	results_style.bg_color = Color(0, 0, 0, 0)  # Transparent background
+	results_style.set_content_margin_all(10)
+	results_label.add_theme_stylebox_override("normal", results_style)
+
 
 func _validate_required_nodes() -> bool:
 	if not results_label or not scan_button or not severity_filter:
