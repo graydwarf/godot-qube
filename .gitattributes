@@ -4,9 +4,17 @@
 .gitignore export-ignore
 .godot/ export-ignore
 icon.png export-ignore
+icon.png.import export-ignore
 icon.svg export-ignore
 icon.svg.import export-ignore
 project.godot export-ignore
 screenshots/ export-ignore
 LICENSE export-ignore
 README.md export-ignore
+
+# Development/IDE files
+.gdqube.cfg export-ignore
+.gdqube_state.json export-ignore
+.claude/ export-ignore
+CLAUDE.md export-ignore
+code_quality_report.html export-ignore
