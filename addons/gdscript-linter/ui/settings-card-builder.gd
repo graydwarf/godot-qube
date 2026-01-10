@@ -107,6 +107,8 @@ func create_scan_options_card(controls: Dictionary) -> GDLintCollapsibleCard:
 		"Skip directories containing .gdignore files")
 	controls.scan_addons_check = _create_checkbox("Scan addons/", hbox,
 		"Include addons/ folder in scans")
+	controls.remember_filters_check = _create_checkbox("Remember Filters", hbox,
+		"Persist Severity, Type, and Filter selections across restarts")
 
 	return card
 

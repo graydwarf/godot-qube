@@ -22,6 +22,12 @@ var show_full_path: bool = false
 # Settings state - Scanning
 var respect_gdignore: bool = true
 var scan_addons: bool = false
+var remember_filter_selections: bool = false
+
+# Persisted filter selections (only used when remember_filter_selections is true)
+var saved_severity_filter: int = 0  # Index in dropdown
+var saved_type_filter: String = "all"  # check_id or "all"
+var saved_file_filter: String = ""
 
 # Settings state - Code Checks (all enabled by default)
 var check_naming_conventions: bool = true
@@ -84,6 +90,12 @@ func load_settings() -> void:
 	config.respect_gdignore = respect_gdignore
 	scan_addons = _get_setting(editor_settings, "code_quality/scanning/scan_addons", false)
 	config.scan_addons = scan_addons
+	remember_filter_selections = _get_setting(editor_settings, "code_quality/scanning/remember_filters", false)
+
+	# Load saved filter selections
+	saved_severity_filter = _get_setting(editor_settings, "code_quality/filters/severity", 0)
+	saved_type_filter = _get_setting(editor_settings, "code_quality/filters/type", "all")
+	saved_file_filter = _get_setting(editor_settings, "code_quality/filters/file", "")
 
 	# Load analysis limits
 	config.line_limit_soft = _get_setting(editor_settings, "code_quality/limits/file_lines_warn", 200)
@@ -158,6 +170,7 @@ func _apply_to_ui() -> void:
 		# Scanning options (now in Code Checks card)
 		"respect_gdignore_check": func(): return respect_gdignore,
 		"scan_addons_check": func(): return scan_addons,
+		"remember_filters_check": func(): return remember_filter_selections,
 		# Code checks - Naming
 		"check_naming_conventions": func(): return check_naming_conventions,
 		# Code checks - Style
@@ -237,6 +250,8 @@ func connect_controls(export_btn: Button, html_export_btn: Button) -> void:
 		controls.respect_gdignore_check.toggled.connect(_on_respect_gdignore_toggled)
 	if controls.has("scan_addons_check"):
 		controls.scan_addons_check.toggled.connect(_on_scan_addons_toggled)
+	if controls.has("remember_filters_check"):
+		controls.remember_filters_check.toggled.connect(_on_remember_filters_toggled)
 
 	# Code checks - Enable All / Disable All buttons
 	if controls.has("enable_all_checks_btn"):
@@ -324,6 +339,23 @@ func _on_scan_addons_toggled(pressed: bool) -> void:
 	scan_addons = pressed
 	config.scan_addons = pressed
 	save_setting("code_quality/scanning/scan_addons", pressed)
+
+
+func _on_remember_filters_toggled(pressed: bool) -> void:
+	remember_filter_selections = pressed
+	save_setting("code_quality/scanning/remember_filters", pressed)
+
+
+# Save filter selections (called by dock.gd when filters change)
+func save_filter_selections(severity_index: int, type_id: String, file_text: String) -> void:
+	if not remember_filter_selections:
+		return
+	saved_severity_filter = severity_index
+	saved_type_filter = type_id
+	saved_file_filter = file_text
+	save_setting("code_quality/filters/severity", severity_index)
+	save_setting("code_quality/filters/type", type_id)
+	save_setting("code_quality/filters/file", file_text)
 
 
 # ========== Claude Code Handlers ==========

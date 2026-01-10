@@ -208,6 +208,30 @@ func _apply_initial_visibility() -> void:
 	html_export_button.visible = settings_manager.show_html_export
 	export_button.disabled = true
 	settings_panel.visible = false
+	_restore_saved_filters()
+
+
+# Restores filter selections from settings if Remember Filters is enabled
+func _restore_saved_filters() -> void:
+	if not settings_manager.remember_filter_selections:
+		return
+
+	# Restore severity filter
+	var saved_severity: int = settings_manager.saved_severity_filter
+	if saved_severity >= 0 and saved_severity < severity_filter.item_count:
+		severity_filter.select(saved_severity)
+		match saved_severity:
+			0: current_severity_filter = "all"
+			1: current_severity_filter = "critical"
+			2: current_severity_filter = "warning"
+			3: current_severity_filter = "info"
+
+	# Restore file filter text
+	file_filter.text = settings_manager.saved_file_filter
+	current_file_filter = settings_manager.saved_file_filter.to_lower()
+
+	# Note: Type filter is restored after first scan since it depends on results
+	# We store the saved type and apply it in _display_results if valid
 
 
 func _setup_busy_overlay() -> void:
@@ -362,6 +386,9 @@ func _run_analysis() -> void:
 	var analyzer = CodeAnalyzerScript.new(current_config)
 	current_result = analyzer.analyze_directory("res://")
 
+	# Restore saved type filter if Remember Filters is enabled
+	_restore_saved_type_filter()
+
 	_display_results()
 
 	scan_button.disabled = false
@@ -370,6 +397,30 @@ func _run_analysis() -> void:
 
 	# Hide busy overlay when done
 	_hide_busy_overlay()
+
+
+# Restores the saved type filter selection after results are loaded
+func _restore_saved_type_filter() -> void:
+	if not settings_manager.remember_filter_selections:
+		return
+
+	var saved_type: String = settings_manager.saved_type_filter
+	if saved_type == "all" or saved_type.is_empty():
+		return
+
+	# Repopulate type filter based on current severity filter
+	_populate_type_filter(current_severity_filter)
+
+	# Find and select the saved type
+	for i in range(type_filter.item_count):
+		if type_filter.get_item_metadata(i) == saved_type:
+			type_filter.select(i)
+			current_type_filter = saved_type
+			return
+
+	# If saved type not found (no matching issues), keep "All Types"
+	type_filter.select(0)
+	current_type_filter = "all"
 
 
 func _on_export_pressed() -> void:
@@ -435,17 +486,31 @@ func _on_severity_filter_changed(index: int) -> void:
 
 		_display_results()
 
+	_save_filter_selections()
+
 
 func _on_type_filter_changed(index: int) -> void:
 	current_type_filter = type_filter.get_item_metadata(index)
 	if current_result:
 		_display_results()
+	_save_filter_selections()
 
 
 func _on_file_filter_changed(new_text: String) -> void:
 	current_file_filter = new_text.to_lower()
 	if current_result:
 		_display_results()
+	_save_filter_selections()
+
+
+# Saves current filter selections if Remember Filters is enabled
+func _save_filter_selections() -> void:
+	if settings_manager:
+		settings_manager.save_filter_selections(
+			severity_filter.selected,
+			current_type_filter,
+			file_filter.text
+		)
 
 
 func _on_settings_pressed() -> void:
