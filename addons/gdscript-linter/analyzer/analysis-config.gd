@@ -238,6 +238,9 @@ func save_to_json(path: String) -> bool:
 
 
 # Load configuration from JSON file
+# Config loading requires checking each property existence - inherent complexity
+# gdlint:ignore-function:high-complexity=45
+# gdlint:ignore-function:long-function=85
 func load_from_json(path: String) -> bool:
 	if not FileAccess.file_exists(path):
 		return false
