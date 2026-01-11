@@ -110,6 +110,23 @@ func create_scan_options_card(controls: Dictionary) -> GDLintCollapsibleCard:
 	controls.remember_filters_check = _create_checkbox("Remember Filters", hbox,
 		"Persist Severity, Type, and Filter selections across restarts")
 
+	# Config export section
+	var export_row := HBoxContainer.new()
+	export_row.add_theme_constant_override("separation", 8)
+	vbox.add_child(export_row)
+
+	controls.export_config_btn = Button.new()
+	controls.export_config_btn.text = "Export Config..."
+	controls.export_config_btn.flat = true
+	controls.export_config_btn.tooltip_text = "Export settings to a custom JSON file (for CI/CD or alternate configs)"
+	export_row.add_child(controls.export_config_btn)
+
+	var info_label := Label.new()
+	info_label.text = "(Settings auto-sync to gdlint.json)"
+	info_label.add_theme_color_override("font_color", Color(0.5, 0.55, 0.6))
+	info_label.add_theme_font_size_override("font_size", 12)
+	export_row.add_child(info_label)
+
 	return card
 
 

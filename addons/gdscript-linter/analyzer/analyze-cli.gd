@@ -3,11 +3,13 @@
 @tool
 extends SceneTree
 ## CLI runner for code analysis
-## Usage: godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd
+## Usage: godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd -- [options] [paths...]
 ## Options:
-##   -- --path "C:/path/to/project"   Analyze external project
-##   -- --format json                  Output as JSON (default: console)
-##   -- --clickable                    Use Godot Output panel clickable format
+##   --config <path>    Use custom config file (default: gdlint.json)
+##   --format <type>    Output format: console, json, clickable, html, github
+##   --severity <level> Minimum severity to report: info, warning, critical
+##   --check <checks>   Comma-separated list of checks to run
+##   --no-ignore        Bypass all gdlint:ignore directives
 
 const AnalysisConfigClass = preload("res://addons/gdscript-linter/analyzer/analysis-config.gd")
 const CodeAnalyzerClass = preload("res://addons/gdscript-linter/analyzer/code-analyzer.gd")
@@ -16,10 +18,14 @@ const FileResultClass = preload("res://addons/gdscript-linter/analyzer/file-resu
 const IssueClass = preload("res://addons/gdscript-linter/analyzer/issue.gd")
 const HtmlReportGenerator = preload("res://addons/gdscript-linter/analyzer/html-report-generator.gd")
 
-var _target_path: String = "res://"
-var _output_format: String = "console"  # "console", "json", "clickable", "html"
+var _target_paths: Array[String] = []  # Multiple paths to analyze
+var _output_format: String = "console"  # "console", "json", "clickable", "html", "github"
 var _output_file: String = ""  # For HTML output
 var _no_ignore: bool = false  # Bypass all gdlint:ignore directives
+var _config_path: String = ""  # Custom config file path
+var _severity_filter: String = ""  # Minimum severity: "info", "warning", "critical"
+var _check_filter: Array[String] = []  # Specific checks to run
+var _top_limit: int = 0  # Limit to top N issues (0 = no limit)
 var _exit_code: int = 0
 
 func _init() -> void:
@@ -35,79 +41,272 @@ func _parse_arguments() -> void:
 	while i < args.size():
 		var arg: String = args[i]
 
-		match arg:
-			"--path":
-				if i + 1 < args.size():
-					# Normalize path separators for Windows compatibility
-					var raw_path: String = args[i + 1]
-					_target_path = raw_path.replace("/", "\\") if OS.has_feature("windows") else raw_path
-					i += 1
-			"--format":
-				if i + 1 < args.size():
-					_output_format = args[i + 1]
-					i += 1
-			"--clickable":
-				_output_format = "clickable"
-			"--json":
-				_output_format = "json"
-			"--html":
-				_output_format = "html"
-			"--output", "-o":
-				if i + 1 < args.size():
-					_output_file = args[i + 1]
-					i += 1
-			"--no-ignore":
-				_no_ignore = true
-			"--help", "-h":
-				_print_help()
-				quit(0)
-				return
+		# Check if this is a flag or a positional path argument
+		if arg.begins_with("-"):
+			match arg:
+				"--path":
+					# Legacy single path support
+					if i + 1 < args.size():
+						var raw_path: String = args[i + 1]
+						var normalized := raw_path.replace("/", "\\") if OS.has_feature("windows") else raw_path
+						_target_paths.append(normalized)
+						i += 1
+				"--config":
+					if i + 1 < args.size():
+						_config_path = args[i + 1]
+						i += 1
+				"--format":
+					if i + 1 < args.size():
+						_output_format = args[i + 1]
+						i += 1
+				"--severity":
+					if i + 1 < args.size():
+						_severity_filter = args[i + 1].to_lower()
+						i += 1
+				"--check":
+					if i + 1 < args.size():
+						var checks: String = args[i + 1]
+						for check in checks.split(","):
+							var trimmed := check.strip_edges()
+							if not trimmed.is_empty():
+								_check_filter.append(trimmed)
+						i += 1
+				"--top":
+					if i + 1 < args.size():
+						_top_limit = int(args[i + 1])
+						i += 1
+				"--clickable":
+					_output_format = "clickable"
+				"--json":
+					_output_format = "json"
+				"--html":
+					_output_format = "html"
+				"--github":
+					_output_format = "github"
+				"--output", "-o":
+					if i + 1 < args.size():
+						_output_file = args[i + 1]
+						i += 1
+				"--no-ignore":
+					_no_ignore = true
+				"--help", "-h":
+					_print_help()
+					quit(0)
+					return
+		else:
+			# Positional argument - treat as a path to analyze
+			var normalized := arg.replace("/", "\\") if OS.has_feature("windows") else arg
+			_target_paths.append(normalized)
 
 		i += 1
 
-# gdlint:ignore-function:print-statement - CLI help output
+	# Default to current directory if no paths specified
+	if _target_paths.is_empty():
+		_target_paths.append("res://")
+
+# gdlint:ignore-function:print-statement,long-function - CLI help output
 func _print_help() -> void:
 	print("")
 	print("GDScript Linter - Code Quality Analyzer for GDScript")
 	print("")
 	print("Usage:")
-	print("  godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd [options]")
+	print("  godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd -- [options] [paths...]")
+	print("")
+	print("Arguments:")
+	print("  [paths...]        Files or directories to analyze (default: res://)")
 	print("")
 	print("Options:")
-	print("  --path <dir>      Analyze project at specified path (default: res://)")
-	print("  --format <type>   Output format: console, json, clickable, html (default: console)")
+	print("  --config <path>   Path to config file (default: gdlint.json)")
+	print("  --format <type>   Output format: console, json, clickable, html, github (default: console)")
+	print("  --severity <lvl>  Minimum severity to report: info, warning, critical")
+	print("  --check <checks>  Comma-separated list of checks to run (e.g., long-function,high-complexity)")
+	print("  --top <N>         Show only top N issues sorted by priority")
 	print("  --json            Shorthand for --format json")
 	print("  --clickable       Shorthand for --format clickable (Godot Output panel format)")
 	print("  --html            Shorthand for --format html (generates HTML report)")
-	print("  --output, -o <f>  Output file path (required for --html, default: code_quality_report.html)")
+	print("  --github          Shorthand for --format github (GitHub Actions annotations)")
+	print("  --output, -o <f>  Output file path (for --html, default: code_quality_report.html)")
 	print("  --no-ignore       Bypass all gdlint:ignore directives (show everything)")
+	print("  --path <dir>      Legacy: analyze single path (use positional args instead)")
 	print("  --help, -h        Show this help message")
 	print("")
+	print("Examples:")
+	print("  # Analyze current project")
+	print("  godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd")
+	print("")
+	print("  # Analyze specific directories")
+	print("  godot --headless --script res://addons/gdscript-linter/analyzer/analyze-cli.gd -- src/ scripts/")
+	print("")
+	print("  # Use custom config and GitHub Actions output")
+	print("  godot --headless --script ... -- --config gdlint-ci.json --format github src/")
+	print("")
+	print("  # Show only critical issues for specific checks")
+	print("  godot --headless --script ... -- --severity critical --check high-complexity,long-function")
+	print("")
 	print("Exit codes:")
-	print("  0 = No issues")
-	print("  1 = Warnings only")
+	print("  0 = No issues (or only filtered-out issues)")
+	print("  1 = Warnings found")
 	print("  2 = Critical issues found")
 	print("")
 
 func _run_analysis() -> void:
-	var config = AnalysisConfigClass.get_default()
+	var config := _load_config()
 	if _no_ignore:
 		config.respect_ignore_directives = false
+	_apply_check_filter_to_config(config)
+
 	var analyzer = CodeAnalyzerClass.new(config)
 
-	var result = analyzer.analyze_directory(_target_path)
+	# Analyze all paths and merge results
+	var merged_result = null
+	for target_path in _target_paths:
+		var result = analyzer.analyze_directory(target_path)
+		if merged_result == null:
+			merged_result = result
+		else:
+			_merge_results(merged_result, result)
+
+	# Apply severity filter if specified
+	if not _severity_filter.is_empty():
+		_apply_severity_filter(merged_result)
+
+	# Apply priority sort and limit if --top specified
+	if _top_limit > 0:
+		_apply_priority_sort_and_limit(merged_result)
 
 	match _output_format:
 		"json":
-			_output_json(result)
+			_output_json(merged_result)
 		"clickable":
-			_output_clickable(result)
+			_output_clickable(merged_result)
 		"html":
-			_output_html(result)
+			_output_html(merged_result)
+		"github":
+			_output_github(merged_result)
 		_:
-			_output_console(result)
+			_output_console(merged_result)
 
-	_exit_code = result.get_exit_code()
+	_exit_code = merged_result.get_exit_code()
+
+
+# Load config from specified path or auto-detect
+func _load_config() -> Resource:
+	# If custom config path specified, load it
+	if not _config_path.is_empty():
+		var config = AnalysisConfigClass.new()
+		config.load_from_json(_config_path)
+		return config
+
+	# Load from project root gdlint.json
+	return AnalysisConfigClass.load_project_config_auto("res://")
+
+
+# Disable checks not in the filter list
+func _apply_check_filter_to_config(config: Resource) -> void:
+	if _check_filter.is_empty():
+		return
+
+	# Map check IDs to config property names
+	var check_id_to_prop := {
+		"file-length": "check_file_length",
+		"long-function": "check_function_length",
+		"long-line": "check_long_lines",
+		"todo-comment": "check_todo_comments",
+		"print-statement": "check_print_statements",
+		"empty-function": "check_empty_functions",
+		"magic-number": "check_magic_numbers",
+		"commented-code": "check_commented_code",
+		"missing-type-hint": "check_missing_types",
+		"missing-return-type": "check_missing_return_type",
+		"too-many-params": "check_parameters",
+		"deep-nesting": "check_nesting",
+		"high-complexity": "check_cyclomatic_complexity",
+		"god-class": "check_god_class",
+		"naming-class": "check_naming_conventions",
+		"naming-function": "check_naming_conventions",
+		"naming-signal": "check_naming_conventions",
+		"naming-const": "check_naming_conventions",
+		"naming-enum": "check_naming_conventions",
+		"unused-variable": "check_unused_variables",
+		"unused-parameter": "check_unused_parameters",
+	}
+
+	# Disable all checks first
+	for prop in check_id_to_prop.values():
+		if config.get(prop) != null:
+			config.set(prop, false)
+
+	# Enable only the requested checks
+	for check_id in _check_filter:
+		if check_id_to_prop.has(check_id):
+			var prop: String = check_id_to_prop[check_id]
+			config.set(prop, true)
+
+
+# Merge second result into first
+func _merge_results(target, source) -> void:
+	target.issues.append_array(source.issues)
+	target.ignored_issues.append_array(source.ignored_issues)
+	target.file_results.append_array(source.file_results)
+	target.files_analyzed += source.files_analyzed
+	target.total_lines += source.total_lines
+	target.analysis_time_ms += source.analysis_time_ms
+
+
+# Filter issues by minimum severity
+func _apply_severity_filter(result) -> void:
+	var min_severity: int
+	match _severity_filter:
+		"critical":
+			min_severity = IssueClass.Severity.CRITICAL
+		"warning":
+			min_severity = IssueClass.Severity.WARNING
+		_:  # "info" or any other value
+			return  # No filtering needed
+
+	result.issues = result.issues.filter(func(issue): return issue.severity >= min_severity)
+
+
+# Sort issues by priority and limit to top N
+func _apply_priority_sort_and_limit(result) -> void:
+	# Sort by severity (desc), then by extracted value (desc), then by line number
+	result.issues.sort_custom(_compare_issue_priority)
+
+	# Truncate to top N
+	if result.issues.size() > _top_limit:
+		result.issues = result.issues.slice(0, _top_limit)
+
+
+func _compare_issue_priority(a, b) -> bool:
+	# Higher severity first
+	if a.severity != b.severity:
+		return a.severity > b.severity
+
+	# Within same severity, extract numeric value from message (higher = worse)
+	var a_val := _extract_issue_value(a)
+	var b_val := _extract_issue_value(b)
+	if a_val != b_val:
+		return a_val > b_val
+
+	# Same file: earlier line number first
+	if a.file_path == b.file_path:
+		return a.line < b.line
+
+	# Different files: alphabetical
+	return a.file_path < b.file_path
+
+
+func _extract_issue_value(issue) -> int:
+	# Extract numbers from message like "complexity 54" or "exceeds 30 lines (158)"
+	var regex := RegEx.new()
+	regex.compile("\\((\\d+)\\)|complexity (\\d+)|(\\d+) lines")
+	var result := regex.search(issue.message)
+	if result:
+		for i in range(1, 4):
+			if result.get_string(i) != "":
+				return int(result.get_string(i))
+	return 0
+
 
 # gdlint:ignore-function:print-statement - CLI JSON output
 func _output_json(result) -> void:
@@ -147,6 +346,38 @@ func _output_clickable(result) -> void:
 		print("")
 
 	print("Debt Score: %d | Time: %dms" % [result.get_total_debt_score(), result.analysis_time_ms])
+
+
+# gdlint:ignore-function:print-statement - GitHub Actions annotation format
+func _output_github(result) -> void:
+	# GitHub Actions workflow commands format:
+	# ::error file={file},line={line}::{message}
+	# ::warning file={file},line={line}::{message}
+	# ::notice file={file},line={line}::{message}
+	for issue in result.issues:
+		var level: String
+		match issue.severity:
+			IssueClass.Severity.CRITICAL:
+				level = "error"
+			IssueClass.Severity.WARNING:
+				level = "warning"
+			_:
+				level = "notice"
+
+		# Get relative file path (strip res:// prefix)
+		var file_path: String = issue.file_path
+		if file_path.begins_with("res://"):
+			file_path = file_path.substr(6)
+
+		# Format: ::level file=path,line=N::message
+		print("::%s file=%s,line=%d::[%s] %s" % [
+			level,
+			file_path,
+			issue.line,
+			issue.check_id,
+			issue.message
+		])
+
 
 # gdlint:ignore-function:print-statement - Console output formatting
 func _output_console(result) -> void:

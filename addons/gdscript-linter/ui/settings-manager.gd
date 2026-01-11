@@ -7,6 +7,7 @@ class_name GDLintSettingsManager
 
 signal setting_changed(key: String, value: Variant)
 signal display_refresh_needed
+signal export_config_requested
 
 const CLAUDE_CODE_DEFAULT_COMMAND := "claude --permission-mode plan"
 const CLAUDE_CODE_DEFAULT_INSTRUCTIONS := "When analyzing issues, recommend the best solution - which may be a gdlint:ignore directive instead of refactoring. If code is clean and readable but slightly over a limit, suggest adding an ignore comment rather than restructuring working code. Always explain why you're recommending a refactor vs an ignore directive. Adhere to res://addons/gdscript-linter/IGNORE_RULES.md syntax for ignores."
@@ -278,6 +279,10 @@ func connect_controls(export_btn: Button, html_export_btn: Button) -> void:
 	if controls.has("claude_instructions_reset_button"):
 		controls.claude_instructions_reset_button.pressed.connect(_on_claude_instructions_reset_pressed)
 
+	# Export config button
+	if controls.has("export_config_btn"):
+		controls.export_config_btn.pressed.connect(_on_export_config_pressed)
+
 
 # Helper to get setting with default value
 func _get_setting(editor_settings: EditorSettings, key: String, default_value: Variant) -> Variant:
@@ -289,6 +294,26 @@ func save_setting(key: String, value: Variant) -> void:
 	var editor_settings := EditorInterface.get_editor_settings()
 	editor_settings.set_setting(key, value)
 	setting_changed.emit(key, value)
+
+	# Auto-sync analysis settings to project config (gdlint.json)
+	# Only sync settings that affect analysis results (not display/filter/claude settings)
+	if _is_analysis_setting(key):
+		_sync_config_to_json()
+
+
+# Check if this setting affects analysis and should be synced to project config
+func _is_analysis_setting(key: String) -> bool:
+	return (key.begins_with("code_quality/limits/") or
+			key.begins_with("code_quality/checks/") or
+			key.begins_with("code_quality/scanning/respect_gdignore") or
+			key.begins_with("code_quality/scanning/scan_addons"))
+
+
+# Sync current config state to gdlint.json in project root
+func _sync_config_to_json() -> void:
+	if config == null:
+		return
+	config.save_to_json("res://gdlint.json")
 
 
 # ========== Display Options Handlers ==========
@@ -389,6 +414,20 @@ func _on_claude_instructions_reset_pressed() -> void:
 	if controls.has("claude_instructions_edit"):
 		controls.claude_instructions_edit.text = CLAUDE_CODE_DEFAULT_INSTRUCTIONS
 	save_setting("code_quality/claude/custom_instructions", CLAUDE_CODE_DEFAULT_INSTRUCTIONS)
+
+
+# ========== Config Export Handlers ==========
+
+func _on_export_config_pressed() -> void:
+	export_config_requested.emit()
+
+
+# Export config to a custom file path (called by dock after file dialog selection)
+func export_config_to_path(file_path: String) -> bool:
+	if config == null:
+		push_error("GDLint: Cannot export config - config is null")
+		return false
+	return config.save_to_json(file_path)
 
 
 # ========== Code Checks Handlers ==========

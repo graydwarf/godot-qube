@@ -177,3 +177,148 @@ func is_path_excluded(path: String) -> bool:
 		if path.contains(excluded):
 			return true
 	return false
+
+
+# Save configuration to JSON file
+func save_to_json(path: String) -> bool:
+	var data := {
+		"limits": {
+			"file_lines_soft": line_limit_soft,
+			"file_lines_hard": line_limit_hard,
+			"function_lines": function_line_limit,
+			"function_lines_critical": function_line_critical,
+			"max_parameters": max_parameters,
+			"max_nesting": max_nesting,
+			"max_line_length": max_line_length,
+			"cyclomatic_warning": cyclomatic_warning,
+			"cyclomatic_critical": cyclomatic_critical,
+			"god_class_functions": god_class_functions,
+			"god_class_signals": god_class_signals,
+			"god_class_exports": god_class_exports,
+		},
+		"checks": {
+			"file_length": check_file_length,
+			"function_length": check_function_length,
+			"parameters": check_parameters,
+			"nesting": check_nesting,
+			"todo_comments": check_todo_comments,
+			"long_lines": check_long_lines,
+			"print_statements": check_print_statements,
+			"empty_functions": check_empty_functions,
+			"magic_numbers": check_magic_numbers,
+			"commented_code": check_commented_code,
+			"missing_types": check_missing_types,
+			"cyclomatic_complexity": check_cyclomatic_complexity,
+			"god_class": check_god_class,
+			"naming_conventions": check_naming_conventions,
+			"unused_variables": check_unused_variables,
+			"unused_parameters": check_unused_parameters,
+			"missing_return_type": check_missing_return_type,
+			"ignore_underscore_prefix": ignore_underscore_prefix,
+		},
+		"scanning": {
+			"respect_gdignore": respect_gdignore,
+			"scan_addons": scan_addons,
+			"respect_ignore_directives": respect_ignore_directives,
+		},
+		"exclude": {
+			"paths": excluded_paths,
+		},
+	}
+
+	var json_string := JSON.stringify(data, "\t")
+	var file := FileAccess.open(path, FileAccess.WRITE)
+	if not file:
+		push_error("GDLint: Failed to save config to %s: %s" % [path, FileAccess.get_open_error()])
+		return false
+
+	file.store_string(json_string)
+	file.close()
+	return true
+
+
+# Load configuration from JSON file
+func load_from_json(path: String) -> bool:
+	if not FileAccess.file_exists(path):
+		return false
+
+	var file := FileAccess.open(path, FileAccess.READ)
+	if not file:
+		return false
+
+	var json_string := file.get_as_text()
+	file.close()
+
+	var json := JSON.new()
+	var parse_result := json.parse(json_string)
+	if parse_result != OK:
+		push_error("GDLint: Failed to parse JSON config at %s: %s" % [path, json.get_error_message()])
+		return false
+
+	var data: Dictionary = json.data
+	if not data is Dictionary:
+		push_error("GDLint: Invalid config format at %s" % path)
+		return false
+
+	# Apply limits
+	if data.has("limits"):
+		var limits: Dictionary = data.limits
+		if limits.has("file_lines_soft"): line_limit_soft = int(limits.file_lines_soft)
+		if limits.has("file_lines_hard"): line_limit_hard = int(limits.file_lines_hard)
+		if limits.has("function_lines"): function_line_limit = int(limits.function_lines)
+		if limits.has("function_lines_critical"): function_line_critical = int(limits.function_lines_critical)
+		if limits.has("max_parameters"): max_parameters = int(limits.max_parameters)
+		if limits.has("max_nesting"): max_nesting = int(limits.max_nesting)
+		if limits.has("max_line_length"): max_line_length = int(limits.max_line_length)
+		if limits.has("cyclomatic_warning"): cyclomatic_warning = int(limits.cyclomatic_warning)
+		if limits.has("cyclomatic_critical"): cyclomatic_critical = int(limits.cyclomatic_critical)
+		if limits.has("god_class_functions"): god_class_functions = int(limits.god_class_functions)
+		if limits.has("god_class_signals"): god_class_signals = int(limits.god_class_signals)
+		if limits.has("god_class_exports"): god_class_exports = int(limits.god_class_exports)
+
+	# Apply checks
+	if data.has("checks"):
+		var checks: Dictionary = data.checks
+		if checks.has("file_length"): check_file_length = bool(checks.file_length)
+		if checks.has("function_length"): check_function_length = bool(checks.function_length)
+		if checks.has("parameters"): check_parameters = bool(checks.parameters)
+		if checks.has("nesting"): check_nesting = bool(checks.nesting)
+		if checks.has("todo_comments"): check_todo_comments = bool(checks.todo_comments)
+		if checks.has("long_lines"): check_long_lines = bool(checks.long_lines)
+		if checks.has("print_statements"): check_print_statements = bool(checks.print_statements)
+		if checks.has("empty_functions"): check_empty_functions = bool(checks.empty_functions)
+		if checks.has("magic_numbers"): check_magic_numbers = bool(checks.magic_numbers)
+		if checks.has("commented_code"): check_commented_code = bool(checks.commented_code)
+		if checks.has("missing_types"): check_missing_types = bool(checks.missing_types)
+		if checks.has("cyclomatic_complexity"): check_cyclomatic_complexity = bool(checks.cyclomatic_complexity)
+		if checks.has("god_class"): check_god_class = bool(checks.god_class)
+		if checks.has("naming_conventions"): check_naming_conventions = bool(checks.naming_conventions)
+		if checks.has("unused_variables"): check_unused_variables = bool(checks.unused_variables)
+		if checks.has("unused_parameters"): check_unused_parameters = bool(checks.unused_parameters)
+		if checks.has("missing_return_type"): check_missing_return_type = bool(checks.missing_return_type)
+		if checks.has("ignore_underscore_prefix"): ignore_underscore_prefix = bool(checks.ignore_underscore_prefix)
+
+	# Apply scanning options
+	if data.has("scanning"):
+		var scanning: Dictionary = data.scanning
+		if scanning.has("respect_gdignore"): respect_gdignore = bool(scanning.respect_gdignore)
+		if scanning.has("scan_addons"): scan_addons = bool(scanning.scan_addons)
+		if scanning.has("respect_ignore_directives"): respect_ignore_directives = bool(scanning.respect_ignore_directives)
+
+	# Apply excluded paths
+	if data.has("exclude"):
+		var exclude: Dictionary = data.exclude
+		if exclude.has("paths") and exclude.paths is Array:
+			excluded_paths.clear()
+			for p in exclude.paths:
+				excluded_paths.append(str(p))
+
+	return true
+
+
+# Static helper to load config from project root
+static func load_project_config_auto(project_path: String = "res://") -> GDLintConfig:
+	var config = load("res://addons/gdscript-linter/analyzer/analysis-config.gd").new()
+	var json_path := project_path.path_join("gdlint.json")
+	config.load_from_json(json_path)
+	return config

@@ -86,6 +86,9 @@ var _busy_animation_timer: Timer
 var _spinner_frames := ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
 var _spinner_frame_index: int = 0
 
+# Export config file dialog
+var _export_config_dialog: EditorFileDialog
+
 
 func _ready() -> void:
 	_init_node_references()
@@ -172,8 +175,10 @@ func _init_settings_manager() -> void:
 	settings_manager.controls = settings_controls
 	settings_manager.display_refresh_needed.connect(_on_display_refresh_needed)
 	settings_manager.setting_changed.connect(_on_setting_changed)
+	settings_manager.export_config_requested.connect(_on_export_config_requested)
 	settings_manager.load_settings()
 	settings_manager.connect_controls(export_button, html_export_button)
+	_setup_export_config_dialog()
 
 
 func _connect_signals() -> void:
@@ -295,6 +300,28 @@ func _setup_busy_overlay() -> void:
 func _on_busy_animation_tick() -> void:
 	_spinner_frame_index = (_spinner_frame_index + 1) % _spinner_frames.size()
 	_busy_spinner.text = _spinner_frames[_spinner_frame_index]
+
+
+func _setup_export_config_dialog() -> void:
+	_export_config_dialog = EditorFileDialog.new()
+	_export_config_dialog.file_mode = EditorFileDialog.FILE_MODE_SAVE_FILE
+	_export_config_dialog.access = EditorFileDialog.ACCESS_RESOURCES
+	_export_config_dialog.title = "Export GDLint Config"
+	_export_config_dialog.add_filter("*.json", "JSON Config Files")
+	_export_config_dialog.current_file = "gdlint-custom.json"
+	_export_config_dialog.file_selected.connect(_on_export_config_file_selected)
+	add_child(_export_config_dialog)
+
+
+func _on_export_config_requested() -> void:
+	_export_config_dialog.popup_centered(Vector2i(600, 400))
+
+
+func _on_export_config_file_selected(file_path: String) -> void:
+	if settings_manager.export_config_to_path(file_path):
+		print("GDLint: Config exported to %s" % file_path)
+	else:
+		push_error("GDLint: Failed to export config to %s" % file_path)
 
 
 func _show_busy_overlay() -> void:
