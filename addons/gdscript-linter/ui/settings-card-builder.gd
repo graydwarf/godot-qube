@@ -121,6 +121,38 @@ func create_export_options_card(controls: Dictionary) -> GDLintCollapsibleCard:
 	controls.include_context_check = _create_checkbox("Include Context", options_hbox,
 		"Include custom instructions from Claude Code settings in exports for AI tools.")
 
+	# Separator
+	vbox.add_child(HSeparator.new())
+
+	# Row 3: Export folder path
+	var folder_hbox := HBoxContainer.new()
+	folder_hbox.add_theme_constant_override("separation", 8)
+	vbox.add_child(folder_hbox)
+
+	var folder_label := Label.new()
+	folder_label.text = "Export Folder:"
+	folder_label.add_theme_color_override("font_color", Color(0.7, 0.72, 0.75))
+	folder_hbox.add_child(folder_label)
+
+	controls.export_folder_edit = LineEdit.new()
+	controls.export_folder_edit.placeholder_text = "res:// (project root)"
+	controls.export_folder_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	controls.export_folder_edit.tooltip_text = "Custom folder path for exports. Leave empty to use project root (res://)"
+	folder_hbox.add_child(controls.export_folder_edit)
+
+	controls.export_folder_btn = Button.new()
+	controls.export_folder_btn.text = "Browse..."
+	controls.export_folder_btn.flat = true
+	controls.export_folder_btn.tooltip_text = "Select export folder"
+	folder_hbox.add_child(controls.export_folder_btn)
+
+	controls.export_folder_reset_btn = Button.new()
+	controls.export_folder_reset_btn.icon = _reset_icon
+	controls.export_folder_reset_btn.flat = true
+	controls.export_folder_reset_btn.tooltip_text = "Reset to default (project root)"
+	controls.export_folder_reset_btn.custom_minimum_size = Vector2(16, 16)
+	folder_hbox.add_child(controls.export_folder_reset_btn)
+
 	return card
 
 

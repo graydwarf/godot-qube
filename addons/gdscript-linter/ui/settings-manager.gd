@@ -8,6 +8,7 @@ class_name GDLintSettingsManager
 signal setting_changed(key: String, value: Variant)
 signal display_refresh_needed
 signal export_config_requested
+signal export_folder_browse_requested
 
 const CLAUDE_CODE_DEFAULT_COMMAND := "claude --permission-mode plan"
 const CLAUDE_CODE_DEFAULT_INSTRUCTIONS := """When analyzing linter issues, consider both quick fixes AND architectural improvements:
@@ -47,6 +48,7 @@ var show_full_path: bool = false
 # Settings state - Export
 var filter_exports: bool = false
 var include_context_in_exports: bool = true  # Enabled by default
+var export_folder_path: String = ""  # Empty = res:// (project root)
 
 # Settings state - Scanning
 var respect_gdignore: bool = true
@@ -118,6 +120,7 @@ func load_settings() -> void:
 	# Load export settings
 	filter_exports = _get_setting(editor_settings, "code_quality/export/filter_exports", false)
 	include_context_in_exports = _get_setting(editor_settings, "code_quality/export/include_context", true)
+	export_folder_path = _get_setting(editor_settings, "code_quality/export/folder_path", "")
 
 	# Load scanning settings
 	respect_gdignore = _get_setting(editor_settings, "code_quality/scanning/respect_gdignore", true)
@@ -260,6 +263,7 @@ func _apply_to_ui() -> void:
 	var text_mappings := {
 		"claude_command_edit": func(): return claude_code_command,
 		"claude_instructions_edit": func(): return claude_custom_instructions,
+		"export_folder_edit": func(): return export_folder_path,
 	}
 
 	for control_key in text_mappings:
@@ -284,6 +288,12 @@ func connect_controls(export_btn: Button, html_export_btn: Button, md_export_btn
 		controls.filter_exports_check.toggled.connect(_on_filter_exports_toggled)
 	if controls.has("include_context_check"):
 		controls.include_context_check.toggled.connect(_on_include_context_toggled)
+	if controls.has("export_folder_edit"):
+		controls.export_folder_edit.text_changed.connect(_on_export_folder_changed)
+	if controls.has("export_folder_btn"):
+		controls.export_folder_btn.pressed.connect(_on_export_folder_browse_pressed)
+	if controls.has("export_folder_reset_btn"):
+		controls.export_folder_reset_btn.pressed.connect(_on_export_folder_reset_pressed)
 	if controls.has("show_ignored_check"):
 		controls.show_ignored_check.toggled.connect(_on_show_ignored_toggled)
 	if controls.has("show_full_path_check"):
@@ -399,6 +409,22 @@ func _on_filter_exports_toggled(pressed: bool) -> void:
 func _on_include_context_toggled(pressed: bool) -> void:
 	include_context_in_exports = pressed
 	save_setting("code_quality/export/include_context", pressed)
+
+
+func _on_export_folder_changed(new_text: String) -> void:
+	export_folder_path = new_text
+	save_setting("code_quality/export/folder_path", new_text)
+
+
+func _on_export_folder_browse_pressed() -> void:
+	export_folder_browse_requested.emit()
+
+
+func _on_export_folder_reset_pressed() -> void:
+	export_folder_path = ""
+	if controls.has("export_folder_edit"):
+		controls.export_folder_edit.text = ""
+	save_setting("code_quality/export/folder_path", "")
 
 
 func _on_show_ignored_toggled(pressed: bool) -> void:

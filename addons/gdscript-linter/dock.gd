@@ -88,6 +88,16 @@ var _spinner_frame_index: int = 0
 # Export config file dialog
 var _export_config_dialog: EditorFileDialog
 
+# Export folder dialog
+var _export_folder_dialog: EditorFileDialog
+
+# Export notification panel
+var _export_notification: PanelContainer
+var _export_path_label: Label
+var _last_export_path: String = ""
+var _last_export_content: String = ""
+var _last_export_type: String = ""  # "json", "html", "md"
+
 
 func _ready() -> void:
 	_init_node_references()
@@ -184,9 +194,12 @@ func _init_settings_manager() -> void:
 	settings_manager.display_refresh_needed.connect(_on_display_refresh_needed)
 	settings_manager.setting_changed.connect(_on_setting_changed)
 	settings_manager.export_config_requested.connect(_on_export_config_requested)
+	settings_manager.export_folder_browse_requested.connect(_on_export_folder_browse_requested)
 	settings_manager.load_settings()
 	settings_manager.connect_controls(export_button, html_export_button, md_export_button)
 	_setup_export_config_dialog()
+	_setup_export_folder_dialog()
+	_setup_export_notification()
 
 
 func _connect_signals() -> void:
@@ -336,6 +349,171 @@ func _on_export_config_file_selected(file_path: String) -> void:
 		push_error("GDLint: Failed to export config to %s" % file_path)
 
 
+func _setup_export_folder_dialog() -> void:
+	_export_folder_dialog = EditorFileDialog.new()
+	_export_folder_dialog.file_mode = EditorFileDialog.FILE_MODE_OPEN_DIR
+	_export_folder_dialog.access = EditorFileDialog.ACCESS_FILESYSTEM
+	_export_folder_dialog.title = "Select Export Folder"
+	_export_folder_dialog.dir_selected.connect(_on_export_folder_selected)
+	add_child(_export_folder_dialog)
+
+
+func _on_export_folder_browse_requested() -> void:
+	_export_folder_dialog.popup_centered(Vector2i(600, 400))
+
+
+func _on_export_folder_selected(dir_path: String) -> void:
+	settings_manager.export_folder_path = dir_path
+	if settings_controls.has("export_folder_edit"):
+		settings_controls.export_folder_edit.text = dir_path
+	settings_manager.save_setting("code_quality/export/folder_path", dir_path)
+
+
+func _setup_export_notification() -> void:
+	_export_notification = PanelContainer.new()
+	_export_notification.visible = false
+
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.18, 0.14, 1.0)  # Subtle green tint for success
+	style.border_color = Color(0.3, 0.5, 0.35, 0.8)
+	style.set_border_width_all(1)
+	style.set_corner_radius_all(6)
+	style.set_content_margin_all(10)
+	_export_notification.add_theme_stylebox_override("panel", style)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 6)
+	_export_notification.add_child(vbox)
+
+	# Row 1: Path display
+	var path_hbox := HBoxContainer.new()
+	path_hbox.add_theme_constant_override("separation", 8)
+	vbox.add_child(path_hbox)
+
+	var path_prefix := Label.new()
+	path_prefix.text = "Exported:"
+	path_prefix.add_theme_color_override("font_color", Color(0.6, 0.8, 0.65))
+	path_hbox.add_child(path_prefix)
+
+	_export_path_label = Label.new()
+	_export_path_label.add_theme_color_override("font_color", Color(0.85, 0.9, 0.85))
+	_export_path_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_export_path_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	path_hbox.add_child(_export_path_label)
+
+	# Row 2: Action buttons
+	var btn_hbox := HBoxContainer.new()
+	btn_hbox.add_theme_constant_override("separation", 8)
+	vbox.add_child(btn_hbox)
+
+	var open_folder_btn := Button.new()
+	open_folder_btn.text = "Open Folder"
+	open_folder_btn.flat = true
+	open_folder_btn.tooltip_text = "Open containing folder in file explorer"
+	open_folder_btn.pressed.connect(_on_export_open_folder)
+	btn_hbox.add_child(open_folder_btn)
+
+	var open_file_btn := Button.new()
+	open_file_btn.text = "Open File"
+	open_file_btn.flat = true
+	open_file_btn.tooltip_text = "Open the exported file"
+	open_file_btn.pressed.connect(_on_export_open_file)
+	btn_hbox.add_child(open_file_btn)
+
+	var copy_path_btn := Button.new()
+	copy_path_btn.text = "Copy Path"
+	copy_path_btn.flat = true
+	copy_path_btn.tooltip_text = "Copy absolute file path to clipboard"
+	copy_path_btn.pressed.connect(_on_export_copy_path)
+	btn_hbox.add_child(copy_path_btn)
+
+	var copy_content_btn := Button.new()
+	copy_content_btn.text = "Copy Content"
+	copy_content_btn.flat = true
+	copy_content_btn.tooltip_text = "Copy file content to clipboard"
+	copy_content_btn.pressed.connect(_on_export_copy_content)
+	btn_hbox.add_child(copy_content_btn)
+
+	# Spacer to push dismiss button to the right
+	var spacer := Control.new()
+	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	btn_hbox.add_child(spacer)
+
+	var dismiss_btn := Button.new()
+	dismiss_btn.icon = load("res://addons/gdscript-linter/icons/dismiss.svg")
+	dismiss_btn.flat = true
+	dismiss_btn.tooltip_text = "Dismiss"
+	dismiss_btn.custom_minimum_size = Vector2(24, 24)
+	dismiss_btn.pressed.connect(_on_export_notification_dismiss)
+	btn_hbox.add_child(dismiss_btn)
+
+	# Insert notification after toolbar, before ScrollContainer/SettingsPanel
+	var vbox_parent := $VBox
+	var toolbar_idx := $VBox/Toolbar.get_index()
+	vbox_parent.add_child(_export_notification)
+	vbox_parent.move_child(_export_notification, toolbar_idx + 1)
+
+
+func _show_export_notification(file_path: String, content: String, export_type: String) -> void:
+	_last_export_path = file_path
+	_last_export_content = content
+	_last_export_type = export_type
+	_export_path_label.text = file_path
+	_export_notification.visible = true
+
+
+func _hide_export_notification() -> void:
+	_export_notification.visible = false
+
+
+func _on_export_open_folder() -> void:
+	if _last_export_path.is_empty():
+		return
+	var abs_path := ProjectSettings.globalize_path(_last_export_path)
+	var folder_path := abs_path.get_base_dir()
+	OS.shell_open(folder_path)
+
+
+func _on_export_open_file() -> void:
+	if _last_export_path.is_empty():
+		return
+	var abs_path := ProjectSettings.globalize_path(_last_export_path)
+
+	match _last_export_type:
+		"json":
+			# Open in Godot editor
+			var resource = ResourceLoader.load(_last_export_path, "", ResourceLoader.CACHE_MODE_REPLACE)
+			if resource:
+				EditorInterface.edit_resource(resource)
+		"html", "md":
+			# Open with system default application
+			OS.shell_open(abs_path)
+
+
+func _on_export_copy_path() -> void:
+	if _last_export_path.is_empty():
+		return
+	var abs_path := ProjectSettings.globalize_path(_last_export_path)
+	DisplayServer.clipboard_set(abs_path)
+
+
+func _on_export_copy_content() -> void:
+	if _last_export_content.is_empty():
+		return
+	DisplayServer.clipboard_set(_last_export_content)
+
+
+func _on_export_notification_dismiss() -> void:
+	_hide_export_notification()
+
+
+# Returns the full export path for a filename, using custom folder if configured
+func _get_export_path(filename: String) -> String:
+	if settings_manager.export_folder_path.is_empty():
+		return "res://" + filename
+	return settings_manager.export_folder_path.path_join(filename)
+
+
 func _show_busy_overlay() -> void:
 	_spinner_frame_index = 0
 	_busy_spinner.text = _spinner_frames[0]
@@ -355,6 +533,9 @@ func _on_display_refresh_needed() -> void:
 
 # Track if checks changed while settings panel was open
 var _checks_changed_while_settings_open: bool = false
+
+# Track if export notification was visible before opening settings
+var _export_notification_was_visible: bool = false
 
 # Called when any setting changes - just track that checks changed, don't re-scan
 func _on_setting_changed(key: String, _value: Variant) -> void:
@@ -404,6 +585,7 @@ func _get_available_types_for_severity(sev_filter: String) -> Dictionary:
 func _on_scan_pressed() -> void:
 	settings_panel.visible = false
 	$VBox/ScrollContainer.visible = true
+	_hide_export_notification()
 
 	scan_button.disabled = true
 	export_button.disabled = true
@@ -507,16 +689,13 @@ func _on_export_pressed() -> void:
 
 	var export_dict := _build_export_dict(issues_to_export)
 	var json_str := JSON.stringify(export_dict, "\t")
-	var export_path := "res://code_quality_report.json"
+	var export_path := _get_export_path("code_quality_report.json")
 
 	var file := FileAccess.open(export_path, FileAccess.WRITE)
 	if file:
 		file.store_string(json_str)
 		file.close()
-		# Open/refresh in editor (CACHE_MODE_REPLACE forces reload if already open)
-		var resource = ResourceLoader.load(export_path, "", ResourceLoader.CACHE_MODE_REPLACE)
-		if resource:
-			EditorInterface.edit_resource(resource)
+		_show_export_notification(export_path, json_str, "json")
 	else:
 		push_error("Code Quality: Failed to write export file")
 		OS.alert("Failed to write JSON export file:\n%s" % export_path, "Export Error")
@@ -535,13 +714,13 @@ func _on_html_export_pressed() -> void:
 
 	var HtmlReportGenerator = preload("res://addons/gdscript-linter/analyzer/html-report-generator.gd")
 	var html := HtmlReportGenerator.generate(current_result, issues_to_export, _get_export_context())
-	var export_path := "res://code_quality_report.html"
+	var export_path := _get_export_path("code_quality_report.html")
 
 	var file := FileAccess.open(export_path, FileAccess.WRITE)
 	if file:
 		file.store_string(html)
 		file.close()
-		OS.shell_open(ProjectSettings.globalize_path(export_path))
+		_show_export_notification(export_path, html, "html")
 	else:
 		push_error("Code Quality: Failed to write HTML report")
 		OS.alert("Failed to write HTML export file:\n%s" % export_path, "Export Error")
@@ -559,12 +738,13 @@ func _on_md_export_pressed() -> void:
 
 	var MdReportGenerator = preload("res://addons/gdscript-linter/analyzer/md-report-generator.gd")
 	var md := MdReportGenerator.generate(current_result, issues_to_export, _get_export_context())
-	var export_path := "res://code_quality_report.md"
+	var export_path := _get_export_path("code_quality_report.md")
 
 	var file := FileAccess.open(export_path, FileAccess.WRITE)
 	if file:
 		file.store_string(md)
 		file.close()
+		_show_export_notification(export_path, md, "md")
 	else:
 		push_error("Code Quality: Failed to write Markdown report")
 		OS.alert("Failed to write Markdown export file:\n%s" % export_path, "Export Error")
@@ -626,6 +806,16 @@ func _on_settings_pressed() -> void:
 	var was_visible := settings_panel.visible
 	settings_panel.visible = not settings_panel.visible
 	$VBox/ScrollContainer.visible = not settings_panel.visible
+
+	# Hide/restore export notification when toggling settings
+	if settings_panel.visible:
+		# Opening settings - hide notification and remember state
+		_export_notification_was_visible = _export_notification.visible
+		_export_notification.visible = false
+	else:
+		# Closing settings - restore notification if it was visible
+		if _export_notification_was_visible:
+			_export_notification.visible = true
 
 	# If closing settings and checks changed, re-run analysis
 	if was_visible and _checks_changed_while_settings_open:
