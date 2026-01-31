@@ -5,8 +5,6 @@
 extends Control
 ## Displays analysis results with clickable navigation
 
-const ISSUES_PER_CATEGORY := 100
-
 # Issue type display names mapped to check_ids
 const ISSUE_TYPES := {
 	"all": "All Types",
@@ -45,6 +43,7 @@ var results_label: RichTextLabel
 var scan_button: Button
 var export_button: Button
 var html_export_button: Button
+var md_export_button: Button
 var severity_filter: OptionButton
 var type_filter: OptionButton
 var file_filter: LineEdit
@@ -114,6 +113,15 @@ func _init_node_references() -> void:
 	settings_button = $VBox/Toolbar/SettingsButton
 	settings_panel = $VBox/SettingsPanel
 
+	# Create MD export button programmatically (inserted after HTML export button)
+	md_export_button = Button.new()
+	md_export_button.text = "Export MD"
+	md_export_button.tooltip_text = "Export as Markdown"
+	var toolbar := $VBox/Toolbar
+	var html_idx := html_export_button.get_index()
+	toolbar.add_child(md_export_button)
+	toolbar.move_child(md_export_button, html_idx + 1)
+
 	# Add internal content padding to results label
 	var results_style := StyleBoxFlat.new()
 	results_style.bg_color = Color(0, 0, 0, 0)  # Transparent background
@@ -156,7 +164,7 @@ func _style_toolbar_buttons() -> void:
 	btn_pressed.set_corner_radius_all(4)
 	btn_pressed.set_content_margin_all(6)
 
-	for btn in [scan_button, html_export_button, export_button]:
+	for btn in [scan_button, html_export_button, export_button, md_export_button]:
 		if btn:
 			btn.add_theme_stylebox_override("normal", btn_style)
 			btn.add_theme_stylebox_override("hover", btn_hover)
@@ -177,7 +185,7 @@ func _init_settings_manager() -> void:
 	settings_manager.setting_changed.connect(_on_setting_changed)
 	settings_manager.export_config_requested.connect(_on_export_config_requested)
 	settings_manager.load_settings()
-	settings_manager.connect_controls(export_button, html_export_button)
+	settings_manager.connect_controls(export_button, html_export_button, md_export_button)
 	_setup_export_config_dialog()
 
 
@@ -190,6 +198,7 @@ func _connect_signals() -> void:
 	scan_button.pressed.connect(_on_scan_pressed)
 	export_button.pressed.connect(_on_export_pressed)
 	html_export_button.pressed.connect(_on_html_export_pressed)
+	md_export_button.pressed.connect(_on_md_export_pressed)
 	severity_filter.item_selected.connect(_on_severity_filter_changed)
 	type_filter.item_selected.connect(_on_type_filter_changed)
 	file_filter.text_changed.connect(_on_file_filter_changed)
@@ -211,7 +220,10 @@ func _setup_filters() -> void:
 func _apply_initial_visibility() -> void:
 	export_button.visible = settings_manager.show_json_export
 	html_export_button.visible = settings_manager.show_html_export
+	md_export_button.visible = settings_manager.show_md_export
 	export_button.disabled = true
+	html_export_button.disabled = true
+	md_export_button.disabled = true
 	settings_panel.visible = false
 	_restore_saved_filters()
 
@@ -396,6 +408,7 @@ func _on_scan_pressed() -> void:
 	scan_button.disabled = true
 	export_button.disabled = true
 	html_export_button.disabled = true
+	md_export_button.disabled = true
 
 	# Show busy overlay and wait for it to render before blocking
 	_show_busy_overlay()
@@ -421,6 +434,7 @@ func _run_analysis() -> void:
 	scan_button.disabled = false
 	export_button.disabled = false
 	html_export_button.disabled = false
+	md_export_button.disabled = false
 
 	# Hide busy overlay when done
 	_hide_busy_overlay()
@@ -450,20 +464,59 @@ func _restore_saved_type_filter() -> void:
 	current_type_filter = "all"
 
 
+# Helper to get context string for exports
+func _get_export_context() -> String:
+	if not settings_manager.include_context_in_exports:
+		return ""
+	return settings_manager.claude_custom_instructions.strip_edges()
+
+
+# Helper to build export dictionary with optional filtering and context
+func _build_export_dict(issues: Array) -> Dictionary:
+	var issues_array := []
+	for issue in issues:
+		issues_array.append(issue.to_dict())
+
+	var export_dict := {
+		"summary": {
+			"files_analyzed": current_result.files_analyzed,
+			"total_lines": current_result.total_lines,
+			"total_issues": issues.size(),
+			"filtered": settings_manager.filter_exports,
+			"analysis_time_ms": current_result.analysis_time_ms
+		},
+		"issues": issues_array
+	}
+
+	var context := _get_export_context()
+	if not context.is_empty():
+		export_dict["context"] = context
+
+	return export_dict
+
+
 func _on_export_pressed() -> void:
 	if not current_result:
 		return
 
-	var json_str := JSON.stringify(current_result.to_dict(), "\t")
+	var issues_to_export: Array
+	if settings_manager.filter_exports:
+		issues_to_export = _filter_issues(current_result.issues.duplicate())
+	else:
+		issues_to_export = current_result.issues
+
+	var export_dict := _build_export_dict(issues_to_export)
+	var json_str := JSON.stringify(export_dict, "\t")
 	var export_path := "res://code_quality_report.json"
 
 	var file := FileAccess.open(export_path, FileAccess.WRITE)
 	if file:
 		file.store_string(json_str)
 		file.close()
-		var script = load(export_path)
-		if script:
-			EditorInterface.edit_resource(script)
+		# Open/refresh in editor (CACHE_MODE_REPLACE forces reload if already open)
+		var resource = ResourceLoader.load(export_path, "", ResourceLoader.CACHE_MODE_REPLACE)
+		if resource:
+			EditorInterface.edit_resource(resource)
 	else:
 		push_error("Code Quality: Failed to write export file")
 		OS.alert("Failed to write JSON export file:\n%s" % export_path, "Export Error")
@@ -474,8 +527,14 @@ func _on_html_export_pressed() -> void:
 		var AnalysisResultScript = preload("res://addons/gdscript-linter/analyzer/analysis-result.gd")
 		current_result = AnalysisResultScript.new()
 
+	var issues_to_export: Array
+	if settings_manager.filter_exports:
+		issues_to_export = _filter_issues(current_result.issues.duplicate())
+	else:
+		issues_to_export = current_result.issues
+
 	var HtmlReportGenerator = preload("res://addons/gdscript-linter/analyzer/html-report-generator.gd")
-	var html := HtmlReportGenerator.generate(current_result)
+	var html := HtmlReportGenerator.generate(current_result, issues_to_export, _get_export_context())
 	var export_path := "res://code_quality_report.html"
 
 	var file := FileAccess.open(export_path, FileAccess.WRITE)
@@ -486,6 +545,29 @@ func _on_html_export_pressed() -> void:
 	else:
 		push_error("Code Quality: Failed to write HTML report")
 		OS.alert("Failed to write HTML export file:\n%s" % export_path, "Export Error")
+
+
+func _on_md_export_pressed() -> void:
+	if not current_result:
+		return
+
+	var issues_to_export: Array
+	if settings_manager.filter_exports:
+		issues_to_export = _filter_issues(current_result.issues.duplicate())
+	else:
+		issues_to_export = current_result.issues
+
+	var MdReportGenerator = preload("res://addons/gdscript-linter/analyzer/md-report-generator.gd")
+	var md := MdReportGenerator.generate(current_result, issues_to_export, _get_export_context())
+	var export_path := "res://code_quality_report.md"
+
+	var file := FileAccess.open(export_path, FileAccess.WRITE)
+	if file:
+		file.store_string(md)
+		file.close()
+	else:
+		push_error("Code Quality: Failed to write Markdown report")
+		OS.alert("Failed to write Markdown export file:\n%s" % export_path, "Export Error")
 
 
 func _on_severity_filter_changed(index: int) -> void:
@@ -1036,13 +1118,8 @@ func _format_issues_by_type(issues: Array, color: String, severity_key: String) 
 
 		bbcode += " [color=#aaaaaa]──[/color]\n"
 
-		var shown := 0
 		for issue in type_issues:
-			if shown >= ISSUES_PER_CATEGORY:
-				bbcode += "  [color=#888888]  ... and %d more[/color]\n" % (type_issues.size() - shown)
-				break
 			bbcode += _format_issue(issue, color)
-			shown += 1
 
 	return bbcode
 
@@ -1114,17 +1191,12 @@ func _format_ignored_section() -> String:
 			bbcode += "  [color=#555555]%s: %s[/color]\n" % [type_name.to_lower(), ", ".join(refs)]
 		else:
 			bbcode += "  [color=#555555]%s (%d):[/color]\n" % [type_name.to_lower(), type_issues.size()]
-			var shown := 0
 			for issue in type_issues:
-				if shown >= ISSUES_PER_CATEGORY:
-					bbcode += "    [color=#444444]... and %d more[/color]\n" % (type_issues.size() - shown)
-					break
 				var display_path: String = issue.file_path if settings_manager.show_full_path else issue.file_path.get_file()
 				var link := "%s:%d" % [issue.file_path, issue.line]
 				bbcode += "    [url=%s][color=#555555]%s:%d[/color][/url] %s\n" % [
 					link, display_path, issue.line, issue.message
 				]
-				shown += 1
 
 	return bbcode
 

@@ -32,14 +32,23 @@ const ISSUE_TYPES := {
 }
 
 
-static func generate(result) -> String:
-	var critical: Array = result.get_issues_by_severity(IssueClass.Severity.CRITICAL)
-	var warnings: Array = result.get_issues_by_severity(IssueClass.Severity.WARNING)
-	var info: Array = result.get_issues_by_severity(IssueClass.Severity.INFO)
+static func generate(result, issues: Array = [], context: String = "") -> String:
+	# Use provided issues array if not empty, otherwise use all issues from result
+	var all_issues: Array = issues if issues.size() > 0 else result.issues
+
+	# Filter by severity from the provided issues
+	var critical: Array = []
+	var warnings: Array = []
+	var info: Array = []
+	for issue in all_issues:
+		match issue.severity:
+			IssueClass.Severity.CRITICAL: critical.append(issue)
+			IssueClass.Severity.WARNING: warnings.append(issue)
+			IssueClass.Severity.INFO: info.append(issue)
 
 	# Collect types by severity for linked filtering
 	var types_by_severity: Dictionary = {"all": {}, "critical": {}, "warning": {}, "info": {}}
-	for issue in result.issues:
+	for issue in all_issues:
 		types_by_severity["all"][issue.check_id] = true
 	for issue in critical:
 		types_by_severity["critical"][issue.check_id] = true
@@ -70,6 +79,10 @@ static func generate(result) -> String:
 	severity_types_json += "}"
 
 	var html := _get_html_header(result, critical.size(), warnings.size(), info.size())
+
+	# Add context section if provided
+	if not context.is_empty():
+		html += _get_context_section(context)
 
 	if critical.size() > 0:
 		html += "<div class=\"issues-section\" data-severity=\"critical\"><div class=\"section-header critical\"><span class=\"icon\">🔴</span><h2>Critical Issues (<span class=\"count\">%d</span>)</h2></div>\n" % critical.size()
@@ -137,6 +150,9 @@ h2 { color: #888; font-size: 1.2em; margin: 20px 0 10px; border-bottom: 1px soli
 .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #333; color: #666; font-size: 0.85em; }
 .footer a { color: #00d4ff; text-decoration: none; }
 .no-results { text-align: center; color: #666; padding: 40px; }
+.context-section { background: #16213e; border-radius: 8px; padding: 20px; margin-bottom: 30px; border-left: 4px solid #00d4ff; }
+.context-section h2 { color: #00d4ff; margin-bottom: 15px; font-size: 1.1em; border: none; }
+.context-section pre { background: #0f3460; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-family: 'Consolas', 'Monaco', monospace; font-size: 0.85em; color: #ccc; max-height: 300px; overflow-y: auto; }
 </style>
 </head>
 <body>
@@ -268,6 +284,15 @@ applyFilters();
 </body>
 </html>
 """ % [analysis_time_ms, type_names_json, severity_types_json]
+
+
+static func _get_context_section(context: String) -> String:
+	var escaped_context := context.replace("<", "&lt;").replace(">", "&gt;")
+	return """<div class="context-section">
+<h2>📋 Analysis Context</h2>
+<pre>%s</pre>
+</div>
+""" % escaped_context
 
 
 static func _format_html_issue(issue, severity: String) -> String:

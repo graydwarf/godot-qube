@@ -40,8 +40,13 @@ var show_total_issues: bool = true
 var show_debt: bool = true
 var show_json_export: bool = false
 var show_html_export: bool = true
+var show_md_export: bool = false
 var show_ignored_issues: bool = true
 var show_full_path: bool = false
+
+# Settings state - Export
+var filter_exports: bool = false
+var include_context_in_exports: bool = true  # Enabled by default
 
 # Settings state - Scanning
 var respect_gdignore: bool = true
@@ -106,8 +111,13 @@ func load_settings() -> void:
 	show_debt = _get_setting(editor_settings, "code_quality/display/show_debt", true)
 	show_json_export = _get_setting(editor_settings, "code_quality/display/show_json_export", false)
 	show_html_export = _get_setting(editor_settings, "code_quality/display/show_html_export", true)
+	show_md_export = _get_setting(editor_settings, "code_quality/display/show_md_export", false)
 	show_ignored_issues = _get_setting(editor_settings, "code_quality/display/show_ignored", true)
 	show_full_path = _get_setting(editor_settings, "code_quality/display/show_full_path", false)
+
+	# Load export settings
+	filter_exports = _get_setting(editor_settings, "code_quality/export/filter_exports", false)
+	include_context_in_exports = _get_setting(editor_settings, "code_quality/export/include_context", true)
 
 	# Load scanning settings
 	respect_gdignore = _get_setting(editor_settings, "code_quality/scanning/respect_gdignore", true)
@@ -189,8 +199,12 @@ func _apply_to_ui() -> void:
 		"show_debt_check": func(): return show_debt,
 		"show_json_export_check": func(): return show_json_export,
 		"show_html_export_check": func(): return show_html_export,
+		"show_md_export_check": func(): return show_md_export,
 		"show_ignored_check": func(): return show_ignored_issues,
 		"show_full_path_check": func(): return show_full_path,
+		# Export options
+		"filter_exports_check": func(): return filter_exports,
+		"include_context_check": func(): return include_context_in_exports,
 		# Scanning options (now in Code Checks card)
 		"respect_gdignore_check": func(): return respect_gdignore,
 		"scan_addons_check": func(): return scan_addons,
@@ -254,7 +268,7 @@ func _apply_to_ui() -> void:
 
 
 # Connect all UI control signals
-func connect_controls(export_btn: Button, html_export_btn: Button) -> void:
+func connect_controls(export_btn: Button, html_export_btn: Button, md_export_btn: Button) -> void:
 	# Display options
 	if controls.has("show_issues_check"):
 		controls.show_issues_check.toggled.connect(_on_show_issues_toggled)
@@ -264,6 +278,12 @@ func connect_controls(export_btn: Button, html_export_btn: Button) -> void:
 		controls.show_json_export_check.toggled.connect(func(pressed): _on_show_json_export_toggled(pressed, export_btn))
 	if controls.has("show_html_export_check"):
 		controls.show_html_export_check.toggled.connect(func(pressed): _on_show_html_export_toggled(pressed, html_export_btn))
+	if controls.has("show_md_export_check"):
+		controls.show_md_export_check.toggled.connect(func(pressed): _on_show_md_export_toggled(pressed, md_export_btn))
+	if controls.has("filter_exports_check"):
+		controls.filter_exports_check.toggled.connect(_on_filter_exports_toggled)
+	if controls.has("include_context_check"):
+		controls.include_context_check.toggled.connect(_on_include_context_toggled)
 	if controls.has("show_ignored_check"):
 		controls.show_ignored_check.toggled.connect(_on_show_ignored_toggled)
 	if controls.has("show_full_path_check"):
@@ -363,6 +383,22 @@ func _on_show_html_export_toggled(pressed: bool, html_export_btn: Button) -> voi
 	show_html_export = pressed
 	save_setting("code_quality/display/show_html_export", pressed)
 	html_export_btn.visible = pressed
+
+
+func _on_show_md_export_toggled(pressed: bool, md_export_btn: Button) -> void:
+	show_md_export = pressed
+	save_setting("code_quality/display/show_md_export", pressed)
+	md_export_btn.visible = pressed
+
+
+func _on_filter_exports_toggled(pressed: bool) -> void:
+	filter_exports = pressed
+	save_setting("code_quality/export/filter_exports", pressed)
+
+
+func _on_include_context_toggled(pressed: bool) -> void:
+	include_context_in_exports = pressed
+	save_setting("code_quality/export/include_context", pressed)
 
 
 func _on_show_ignored_toggled(pressed: bool) -> void:

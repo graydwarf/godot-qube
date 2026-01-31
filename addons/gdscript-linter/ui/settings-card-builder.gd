@@ -64,6 +64,7 @@ func build_settings_panel(settings_panel: PanelContainer, controls: Dictionary) 
 
 	# Collapsible cards (all collapsed by default)
 	cards_vbox.add_child(create_display_options_card(controls))
+	cards_vbox.add_child(create_export_options_card(controls))
 	cards_vbox.add_child(create_scan_options_card(controls))
 	cards_vbox.add_child(create_code_checks_card(controls))
 	cards_vbox.add_child(create_limits_card(controls))
@@ -87,10 +88,38 @@ func create_display_options_card(controls: Dictionary) -> GDLintCollapsibleCard:
 
 	controls.show_issues_check = _create_checkbox("Show Issues", hbox)
 	controls.show_debt_check = _create_checkbox("Show Debt", hbox)
-	controls.show_json_export_check = _create_checkbox("Show JSON Export", hbox)
-	controls.show_html_export_check = _create_checkbox("Show HTML Export", hbox)
 	controls.show_ignored_check = _create_checkbox("Show Ignored", hbox, "Show ignored issues in a separate section")
 	controls.show_full_path_check = _create_checkbox("Show Full Path", hbox, "Show full res:// path instead of just filename")
+
+	return card
+
+
+# Create Export Options collapsible card
+func create_export_options_card(controls: Dictionary) -> GDLintCollapsibleCard:
+	var card := GDLintCollapsibleCard.new("Export Options", "code_quality/ui/export_options_collapsed")
+	var vbox := card.get_content_container()
+
+	# Row 1: Export visibility toggles
+	var hbox := HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 15)
+	vbox.add_child(hbox)
+
+	controls.show_json_export_check = _create_checkbox("Show JSON Export", hbox)
+	controls.show_html_export_check = _create_checkbox("Show HTML Export", hbox)
+	controls.show_md_export_check = _create_checkbox("Show .md Export", hbox)
+
+	# Separator
+	vbox.add_child(HSeparator.new())
+
+	# Row 2: Export behavior toggles
+	var options_hbox := HBoxContainer.new()
+	options_hbox.add_theme_constant_override("separation", 15)
+	vbox.add_child(options_hbox)
+
+	controls.filter_exports_check = _create_checkbox("Filter Exports", options_hbox,
+		"When enabled, only filtered items are exported. When disabled, everything gets exported.")
+	controls.include_context_check = _create_checkbox("Include Context", options_hbox,
+		"Include custom instructions from Claude Code settings in exports for AI tools.")
 
 	return card
 
@@ -318,7 +347,7 @@ func create_header_bar() -> HBoxContainer:
 
 	# Links
 	var link_data := [
-		["Discord", "https://discord.gg/9GnrTKXGfq"],
+		["Discord", "https://discord.com/channels/779046317896106034/779046318516731917"],
 		["GitHub", "https://github.com/graydwarf/godot-gdscript-linter"],
 		["More Tools", "https://poplava.itch.io"]
 	]
